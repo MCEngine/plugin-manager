@@ -14,7 +14,7 @@ repositories {
 // a server owner drops in one file, not three.
 //
 // This side bundles `common` as well, because the server owns the state and
-// therefore needs TemplateProvider. The client half deliberately does not: it
+// therefore needs MCPluginManagerProvider. The client half deliberately does not: it
 // sends actions and renders answers, so a modified client cannot grant itself a
 // result the server did not give it.
 configurations {

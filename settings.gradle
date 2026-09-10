@@ -30,7 +30,7 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention'
 }
 
-rootProject.name = 'universal-template'
+rootProject.name = 'plugin-manager'
 
 // Modules are added by the task that creates them, so every branch in the
 // history has a settings file that matches the directories on disk. The mod
@@ -62,6 +62,21 @@ include 'platforms:mods:core'
 // Set mods=true in gradle.properties to make it permanent.
 def modsEnabled = providers.gradleProperty('mods').map { it.toBoolean() }.getOrElse(false)
 if (modsEnabled) {
+    // NeoFormRuntime caches its Minecraft decompile in one shared directory under
+    // ~/.gradle/caches/neoformruntime/ and guards each step with a lock file. With
+    // org.gradle.parallel=true the NeoForge client and server modules reach the same
+    // lock at once and the build hangs on "Waiting for lock on decompile_<hash>" --
+    // resident, but with its CPU time no longer advancing, which is what tells a
+    // deadlock apart from Vineflower simply taking a long time on Minecraft.
+    //
+    // Only the mod side involves NFRT, so only the mod side gives the parallelism up.
+    // The six Bukkit modules parallelize cleanly and keep doing so.
+    //
+    // If a run was killed mid-decompile, delete ~/.gradle/caches/neoformruntime/*.lock
+    // before retrying: the lock files outlive the process and the next run waits on a
+    // lock nobody holds.
+    gradle.startParameter.parallelProjectExecutionEnabled = false
+
     include 'platforms:mods:fabric:client'
     include 'platforms:mods:fabric:server'
     include 'platforms:mods:neoforge:client'
@@ -80,7 +95,7 @@ if (modsEnabled) {
 // though that artifact is published and reachable.
 //
 // Keeping Forge behind its own flag means `-Pmods=true build` stays green
-// instead of shipping a template whose documented command fails. See
+// instead of shipping a build whose documented command fails. See
 // wiki/environments/setup.md for what to try.
 def forgeEnabled = providers.gradleProperty('forge').map { it.toBoolean() }.getOrElse(false)
 if (modsEnabled && forgeEnabled) {

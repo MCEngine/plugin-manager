@@ -53,3 +53,10 @@ out/
 # --- [ OS ] ---
 .DS_Store
 Thumbs.db
+
+# --- [ JVM crash and heap dumps ] ---
+# A killed or out-of-memory JVM drops these in the working directory, and a
+# Minecraft decompile dump is several hundred megabytes.
+*.hprof
+hs_err_pid*.log
+replay_pid*.log

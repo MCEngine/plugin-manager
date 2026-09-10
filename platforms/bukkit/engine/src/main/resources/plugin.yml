@@ -4,8 +4,9 @@ main: ${main}
 api-version: '${apiVersion}'
 folia-supported: true
 author: ${author}
-description: Universal plugin template for SpigotMC, PaperMC and Folia
+description: Plugin manager for SpigotMC, PaperMC and Folia
 commands:
   ${command}:
-    description: The template's example command
+    description: The example command this plugin ships with
     usage: /${command} <ping|greet [text]>
+    aliases: [${commandAlias}]

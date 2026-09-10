@@ -9,7 +9,7 @@ version = "${version}"
 displayName = "${modName}"
 authors = "${author}"
 description = '''
-Server half of the universal plugin template.
+Server half of MCPluginManager.
 '''
 
 [[dependencies.${modId}]]
