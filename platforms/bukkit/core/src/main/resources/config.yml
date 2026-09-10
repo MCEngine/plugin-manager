@@ -1,2 +1,46 @@
 # Set to false to keep the plugin installed but inactive.
 enable: true
+
+# --- [ This server's identity ] ---
+#
+# Registered once, with `/mcpm register <name>`, which fills in both values
+# below. The key is a credential: anyone holding it can report an inventory for
+# this server and read what it should be running.
+server:
+  id: ''
+  key: ''
+
+# --- [ Central servers ] ---
+#
+# This plugin can draw from more than one catalogue. They are tried in the order
+# they appear here, so a private catalogue listed first takes precedence over a
+# public one without either knowing about the other.
+#
+# https is required, except on localhost. This plugin sends a bearer token and
+# receives code it will install; over http both are readable and alterable by
+# anything on the path.
+#
+# A token is created in the web panel and is shown exactly once. It needs the
+# fleet:read, fleet:write and artifact:read scopes.
+servers:
+  - name: mcengine
+    url: https://mcpluginmanager.example.com
+    token: ''
+
+# --- [ Behaviour ] ---
+manager:
+  # Ask the central server what should change. The server decides the interval
+  # and this is only the value used before the first successful poll.
+  poll-seconds: 300
+
+  # Apply changes automatically as they are found. With this off, a poll records
+  # what is pending and `/mcpm apply` performs it.
+  #
+  # An update is always staged into plugins/update/ for the server itself to
+  # apply on the next restart: Bukkit cannot safely unload a plugin, and there
+  # is no supported way around that.
+  auto-apply: true
+
+  # Report the installed inventory on startup and after every apply. With this
+  # off the panel cannot show what this server actually has.
+  report-inventory: true
