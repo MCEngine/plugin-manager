@@ -1,0 +1,55 @@
+# --- [ Gradle ] ---
+.gradle
+**/build/
+!**/src/**/build/
+/bin/
+bin/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Avoid ignore Gradle wrappper properties
+!gradle-wrapper.properties
+
+# Cache of project
+.gradletasknamecache
+
+# --- [ Mod toolchains ] ---
+# fabric-loom and ModDevGradle generate a development game directory and a
+# decompilation cache. Both are large and neither is reproducible output.
+run/
+runs/
+.architectury-transformer/
+remappedSrc/
+
+# --- [ Java ] ---
+*.class
+*.log
+*.war
+*.zip
+
+# --- [ IDEs ] ---
+# Eclipse Gradle plugin generated files
+# Eclipse Core
+.project
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+.settings/
+.factorypath
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# VS Code
+.vscode/
+.history/
+
+# --- [ OS ] ---
+.DS_Store
+Thumbs.db

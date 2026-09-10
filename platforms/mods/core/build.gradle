@@ -1,0 +1,24 @@
+plugins {
+    id 'java-library'
+}
+
+def junitVersion = providers.gradleProperty('junit-version').get()
+
+dependencies {
+    // The whole point of this module: the mods speak the same contract the
+    // Bukkit side does, so the wire format is checked by the compiler rather
+    // than described in two places that drift.
+    api project(':api')
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// No Minecraft and no loader dependency, deliberately. That is what lets this
+// module build with the plain java plugin and stay in the default build even
+// when the six loader modules are switched off.
+
+base {
+    archivesName = "${rootProject.name}-mod-core"
+}

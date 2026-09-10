@@ -1,0 +1,12 @@
+plugins {
+    // java-library so consumers of this module see its types on their own compile
+    // classpath. This is the contract every other module is written against.
+    id 'java-library'
+}
+
+// No dependencies, deliberately. The moment this module depends on Bukkit or a
+// mod loader it stops being the thing all four platforms can share.
+
+base {
+    archivesName = "${rootProject.name}-api"
+}

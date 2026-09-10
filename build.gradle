@@ -1,0 +1,73 @@
+def gitOrgName = providers.gradleProperty('git-org-name').get()
+def gitRepositoryName = providers.gradleProperty('git-repository-name').get()
+def projectVersion = providers.gradleProperty('project-version').get()
+def javaVersion = providers.gradleProperty('java-version').get() as Integer
+
+// The one identifier a fork changes that the build cannot derive. PROMPT.md
+// rewrites it here, in the same pass that renames the package directories and
+// the Template* class names -- one rename, one place, so the Java tree and the
+// build can never disagree about what this project is called.
+def namespaceSegment = 'universal'
+def pluginIdValue = 'Template'
+
+allprojects {
+    // Derived from the GitHub owner rather than stored separately, so the group
+    // has exactly one source.
+    group = "io.github.${gitOrgName.toLowerCase()}"
+    version = projectVersion
+
+    ext {
+        // Every module that names a package, a jar, or a command reads these
+        // rather than spelling the values out again.
+        pluginId = pluginIdValue
+        namespace = "io.github.${gitOrgName.toLowerCase()}.${namespaceSegment}"
+        commandName = pluginIdValue.toLowerCase()
+
+        // The plugin and mod descriptors read these rather than spelling the
+        // owner out again, so a fork changes them in gradle.properties only.
+        author = gitOrgName
+        issueTrackerUrl = "https://github.com/${gitOrgName}/${gitRepositoryName}/issues"
+
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    // 'platforms', 'platforms:bukkit' and 'platforms:mods' are intermediate
+    // grouping projects created by their children's paths. They have no build
+    // file and nothing to configure.
+    if (!file('build.gradle').exists()) {
+        return
+    }
+
+    apply plugin: 'java'
+
+    java {
+        // Minecraft 1.21.11 requires Java 21, so one toolchain covers every
+        // module including the mods. Gradle downloads it through the foojay
+        // resolver declared in settings.gradle if it is not installed.
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(javaVersion)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}
+
+// The distributable jars -- the Bukkit engine jar and the six mod jars -- are
+// built straight into build/libs at the repository root so they can be dragged
+// onto a server without hunting through module directories. Nothing else is
+// written there, and `clean` has to remove it explicitly because the root
+// project applies no plugin that would.
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

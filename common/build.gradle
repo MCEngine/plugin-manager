@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+def junitVersion = providers.gradleProperty('junit-version').get()
+
+dependencies {
+    // 'api' rather than 'implementation': a platform module that depends on
+    // common is written against the contract, so it needs those types on its
+    // own compile classpath.
+    api project(':api')
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+base {
+    archivesName = "${rootProject.name}-common"
+}

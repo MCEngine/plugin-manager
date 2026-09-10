@@ -1,0 +1,59 @@
+plugins {
+    id 'net.neoforged.moddev'
+}
+
+neoForge {
+    version = providers.gradleProperty('neoforge-version').get()
+
+    // ModDevGradle uses official Mojang mappings, so the Minecraft types here
+    // read the same as they do in the NeoForge sources -- and differently from
+    // the Fabric modules, which use Yarn. That is why each loader carries its
+    // own payload wrapper.
+    mods {
+        "${commandName}_server" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+configurations {
+    bundled
+    implementation.extendsFrom bundled
+}
+
+dependencies {
+    bundled project(':api')
+    bundled project(':common')
+    bundled project(':platforms:mods:core')
+}
+
+tasks.named('jar', Jar) {
+    dependsOn configurations.bundled
+
+    from({ configurations.bundled.collect { it.isDirectory() ? it : zipTree(it) } }) {
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/MANIFEST.MF'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+}
+
+processResources {
+    def props = [
+        version   : project.version,
+        modId     : "${commandName}_server",
+        modName   : "${pluginId} Server",
+        author    : author,
+        issues    : issueTrackerUrl,
+        minecraft : providers.gradleProperty('minecraft-version').get()
+    ]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand props
+    }
+}
+
+base {
+    archivesName = "${pluginId}NeoForgeServer"
+}

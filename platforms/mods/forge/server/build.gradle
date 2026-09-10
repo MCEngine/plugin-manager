@@ -1,0 +1,71 @@
+plugins {
+    // ModDevGradle's legacy variant drives MinecraftForge, so Forge and NeoForge
+    // share one plugin family and one mappings pipeline.
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+repositories {
+    // ModDevGradle adds the NeoForged repositories itself, but not this one, and
+    // the legacy Forge artifacts -- including the universal-srg jar its pipeline
+    // needs -- are published here only.
+    maven {
+        name = 'MinecraftForge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+}
+
+legacyForge {
+    version = providers.gradleProperty('forge-version').get()
+
+    mods {
+        "${commandName}_server" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+configurations {
+    bundled
+    implementation.extendsFrom bundled
+}
+
+dependencies {
+    bundled project(':api')
+    bundled project(':common')
+    bundled project(':platforms:mods:core')
+}
+
+tasks.named('jar', Jar) {
+    dependsOn configurations.bundled
+
+    from({ configurations.bundled.collect { it.isDirectory() ? it : zipTree(it) } }) {
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/MANIFEST.MF'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+processResources {
+    def props = [
+        version   : project.version,
+        modId     : "${commandName}_server",
+        modName   : "${pluginId} Server",
+        author    : author,
+        issues    : issueTrackerUrl,
+        minecraft : providers.gradleProperty('minecraft-version').get()
+    ]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('META-INF/mods.toml') {
+        expand props
+    }
+}
+
+base {
+    archivesName = "${pluginId}ForgeServer"
+}
+
+// Forge ships reobfuscated, so the distributable is the reobf jar rather than
+// the plain one. That is the artifact that belongs in the drag-and-drop folder.
+tasks.named('reobfJar') {
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+}

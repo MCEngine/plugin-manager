@@ -1,0 +1,11 @@
+name: ${name}
+version: ${version}
+main: ${main}
+api-version: '${apiVersion}'
+folia-supported: ${foliaSupported}
+author: ${author}
+description: Universal plugin template
+commands:
+  ${command}:
+    description: The template's example command
+    usage: /${command} <ping|greet [text]>

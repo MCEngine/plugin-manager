@@ -1,0 +1,71 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+repositories {
+    maven {
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+    // compileOnly, not implementation: the shared modules are shaded exactly once
+    // by the engine jar, which bundles this module. Declaring them any other way
+    // would put a second copy of every class in the universal jar.
+    compileOnly project(':api')
+    compileOnly project(':common')
+    compileOnly project(':platforms:bukkit:core')
+
+    compileOnly "dev.folia:folia-api:${providers.gradleProperty('folia-api-version').get()}"
+
+    // compileOnly is not inherited by the test classpath, so core -- which
+    // re-exposes api and common -- is added back explicitly for tests.
+    testImplementation project(':platforms:bukkit:core')
+    testImplementation "dev.folia:folia-api:${providers.gradleProperty('folia-api-version').get()}"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${providers.gradleProperty('junit-version').get()}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${providers.gradleProperty('junit-version').get()}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// config.yml lives once, in core, and is pulled into each platform jar from
+// there. Copying it per module would mean a fork editing four identical files.
+sourceSets.main.resources.srcDir rootProject.file('platforms/bukkit/core/src/main/resources')
+
+// The thin jar is replaced by the shaded one, which takes its path.
+jar {
+    enabled = false
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    mergeServiceFiles()
+    configurations = [project.configurations.runtimeClasspath]
+}
+
+processResources {
+    def props = [
+        name          : pluginId,
+        version       : project.version,
+        main          : "${namespace}.bukkit.foliamc.${pluginId}FoliaMC",
+        command       : commandName,
+        author    : author,
+        apiVersion    : providers.gradleProperty('plugin-api-version').get(),
+        foliaSupported: 'true'
+    ]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+base {
+    archivesName = "${pluginId}FoliaMC"
+}
+
+build.dependsOn shadowJar

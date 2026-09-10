@@ -1,0 +1,30 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+    // Re-exposed so a platform module depending on core also sees the contract
+    // and the facade without redeclaring them.
+    api project(':api')
+    api project(':common')
+
+    // Compiled against the plain Spigot API on purpose. Anything Paper- or
+    // Folia-specific belongs in that platform's own module, reached through
+    // PlatformScheduler.
+    compileOnly "org.spigotmc:spigot-api:${providers.gradleProperty('spigot-api-version').get()}"
+}
+
+base {
+    archivesName = "${rootProject.name}-bukkit-core"
+}

@@ -1,0 +1,71 @@
+plugins {
+    id 'fabric-loom'
+}
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+}
+
+// Classes bundled into the mod jar. The shared modules are plain Java libraries
+// rather than mods, so they are copied in rather than loaded as dependencies --
+// a server owner drops in one file, not three.
+configurations {
+    bundled
+    implementation.extendsFrom bundled
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${providers.gradleProperty('minecraft-version').get()}"
+
+    mappings "net.fabricmc:yarn:${providers.gradleProperty('fabric-yarn-version').get()}:v2"
+
+    modImplementation "net.fabricmc:fabric-loader:${providers.gradleProperty('fabric-loader-version').get()}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty('fabric-api-version').get()}"
+
+    bundled project(':api')
+    bundled project(':platforms:mods:core')
+}
+
+tasks.named('jar', Jar) {
+    // The configuration itself carries the task dependencies that produce its
+    // jars. Without this, Gradle sees the files appear from nowhere and fails
+    // the build with an implicit-dependency error.
+    dependsOn configurations.bundled
+
+    from({ configurations.bundled.collect { it.isDirectory() ? it : zipTree(it) } }) {
+        // Signature files from a bundled jar do not describe this jar and make
+        // it unloadable if they survive.
+        exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/MANIFEST.MF'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+processResources {
+    def props = [
+        version    : project.version,
+        modId      : "${commandName}_client",
+        modName    : "${pluginId} Client",
+        entrypoint : "${namespace}.mod.fabric.client.${pluginId}FabricClient",
+        minecraft  : providers.gradleProperty('minecraft-version').get(),
+        author     : author,
+        loader     : providers.gradleProperty('fabric-loader-version').get()
+    ]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('fabric.mod.json') {
+        expand props
+    }
+}
+
+base {
+    archivesName = "${pluginId}FabricClient"
+}
+
+// The remapped jar is the distributable one, so that is what lands in the
+// repository root's build/libs alongside the Bukkit engine jar.
+tasks.named('remapJar') {
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+}

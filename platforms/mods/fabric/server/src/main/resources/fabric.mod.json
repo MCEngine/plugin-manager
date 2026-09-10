@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "${modId}",
+  "version": "${version}",
+  "name": "${modName}",
+  "description": "Server half of the universal plugin template. Handles the actions the client sends over the plugin message channel.",
+  "authors": ["${author}"],
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "main": ["${entrypoint}"]
+  },
+  "depends": {
+    "fabricloader": ">=${loader}",
+    "fabric-api": "*",
+    "minecraft": "~${minecraft}"
+  }
+}

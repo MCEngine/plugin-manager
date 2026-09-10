@@ -1,0 +1,11 @@
+name: ${name}
+version: ${version}
+main: ${main}
+api-version: '${apiVersion}'
+folia-supported: true
+author: ${author}
+description: Universal plugin template for SpigotMC, PaperMC and Folia
+commands:
+  ${command}:
+    description: The template's example command
+    usage: /${command} <ping|greet [text]>

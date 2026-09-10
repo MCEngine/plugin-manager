@@ -1,0 +1,100 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+repositories {
+    maven {
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+}
+
+dependencies {
+    implementation project(':api')
+    implementation project(':common')
+    implementation project(':platforms:bukkit:core')
+
+    // All three platform modules are bundled so the universal jar carries every
+    // scheduler and can choose at runtime.
+    implementation project(':platforms:bukkit:spigotmc')
+    implementation project(':platforms:bukkit:papermc')
+    implementation project(':platforms:bukkit:foliamc')
+
+    // Compiled against the Folia API alone. Folia is a superset of the Paper and
+    // Spigot APIs and declares their capability, so all three cannot be declared
+    // together -- Gradle rejects them as a mutually exclusive conflict. Platform
+    // choice is made by runtime probing instead, so no compile-time Paper or
+    // Spigot dependency is needed.
+    compileOnly "dev.folia:folia-api:${providers.gradleProperty('folia-api-version').get()}"
+}
+
+sourceSets.main.resources.srcDir rootProject.file('platforms/bukkit/core/src/main/resources')
+
+// Captured at configuration time so the exclusion rule below closes over a plain
+// String rather than the project, which the configuration cache forbids.
+def ownResourcesDir = sourceSets.main.output.resourcesDir.absolutePath
+
+jar {
+    enabled = false
+}
+
+// Each bundled platform module disables its thin jar in favour of a shadowJar at
+// the same path, so Gradle's usual project-dependency wiring would resolve an
+// artifact that is never built. Wire the ordering explicitly.
+['spigotmc', 'papermc', 'foliamc'].each { platform ->
+    tasks.named('compileJava') { dependsOn ":platforms:bukkit:${platform}:shadowJar" }
+    tasks.named('shadowJar') { dependsOn ":platforms:bukkit:${platform}:shadowJar" }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    mergeServiceFiles()
+    configurations = [project.configurations.runtimeClasspath]
+
+    // Every bundled platform jar ships its own plugin.yml and a copy of
+    // config.yml. Keep only this module's descriptor so the universal jar has
+    // exactly one, and let the first config.yml win -- they are identical, all
+    // coming from the same file in core.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    filesMatching('plugin.yml') {
+        if (!it.file.absolutePath.startsWith(ownResourcesDir)) {
+            it.exclude()
+        }
+    }
+
+    // The distributable jar is built straight into build/libs at the repository
+    // root, so it can be dragged onto a server without hunting through module
+    // directories. A DirectoryProperty provider keeps this configuration-cache
+    // safe, unlike a copy task that reads the project at execution time.
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+}
+
+processResources {
+    def props = [
+        name      : pluginId,
+        version   : project.version,
+        main      : "${namespace}.bukkit.engine.${pluginId}Engine",
+        command   : commandName,
+        author    : author,
+        apiVersion: providers.gradleProperty('plugin-api-version').get()
+    ]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+base {
+    archivesName = "${pluginId}Engine"
+}
+
+build.dependsOn shadowJar

@@ -1,0 +1,89 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
+        }
+    }
+
+    // Plugin versions are declared once here, read from gradle.properties, so a
+    // module can write `id 'com.gradleup.shadow'` with no version and a fork
+    // retargets everything from one file. The plugins {} block itself accepts
+    // only constant expressions, which is why the versions cannot be read there.
+    plugins {
+        id 'org.gradle.toolchains.foojay-resolver-convention' version providers.gradleProperty('foojay-resolver-version').get()
+        id 'com.gradleup.shadow' version providers.gradleProperty('shadow-version').get()
+        id 'fabric-loom' version providers.gradleProperty('loom-version').get()
+        id 'net.neoforged.moddev' version providers.gradleProperty('moddevgradle-version').get()
+        id 'net.neoforged.moddev.legacyforge' version providers.gradleProperty('moddevgradle-version').get()
+    }
+}
+
+plugins {
+    // Lets Gradle download the Java 21 toolchain rather than requiring it to be
+    // installed already.
+    id 'org.gradle.toolchains.foojay-resolver-convention'
+}
+
+rootProject.name = 'universal-template'
+
+// Modules are added by the task that creates them, so every branch in the
+// history has a settings file that matches the directories on disk. The mod
+// modules are the exception -- see the opt-in block at the bottom.
+
+// Shared contract and its implementation. Every platform depends on these.
+include 'api'
+include 'common'
+
+// Bukkit server plugin: shared core, three platform entry points, and the
+// universal engine jar that bundles all three.
+include 'platforms:bukkit:core'
+include 'platforms:bukkit:spigotmc'
+include 'platforms:bukkit:papermc'
+include 'platforms:bukkit:foliamc'
+include 'platforms:bukkit:engine'
+
+// Loader-agnostic mod code. Always included: it depends on no Minecraft and no
+// loader, so it builds with the plain java plugin and keeps the wire format
+// compiling even when the loader modules below are switched off.
+include 'platforms:mods:core'
+
+// The six loader modules are opt-in. Their toolchains download and decompile
+// Minecraft on first run, which costs minutes and gigabytes, so a change
+// confined to the Bukkit side should not have to pay for it.
+//
+//   ./gradlew -Pmods=true build
+//
+// Set mods=true in gradle.properties to make it permanent.
+def modsEnabled = providers.gradleProperty('mods').map { it.toBoolean() }.getOrElse(false)
+if (modsEnabled) {
+    include 'platforms:mods:fabric:client'
+    include 'platforms:mods:fabric:server'
+    include 'platforms:mods:neoforge:client'
+    include 'platforms:mods:neoforge:server'
+}
+
+// Forge needs a second flag:
+//
+//   ./gradlew -Pmods=true -Pforge=true build
+//
+// Its modules are written and complete, but they do not currently build. The
+// legacy Forge support in ModDevGradle drives NeoFormRuntime, whose own
+// downloader fetches net.minecraftforge:forge:<version>:universal-srg outside
+// Gradle's dependency resolution -- so declaring maven.minecraftforge.net in the
+// module, or in allprojects, does not reach it, and the download fails even
+// though that artifact is published and reachable.
+//
+// Keeping Forge behind its own flag means `-Pmods=true build` stays green
+// instead of shipping a template whose documented command fails. See
+// wiki/environments/setup.md for what to try.
+def forgeEnabled = providers.gradleProperty('forge').map { it.toBoolean() }.getOrElse(false)
+if (modsEnabled && forgeEnabled) {
+    include 'platforms:mods:forge:client'
+    include 'platforms:mods:forge:server'
+}
