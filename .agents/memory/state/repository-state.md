@@ -7,33 +7,35 @@ description: What this repository contains right now, what it does not yet, and 
 
 Overwritten in place, always current.
 
-## As of the agent instruction system landing
+## As of the rename to MCPluginManager
 
-`MCEngine/universal-template` is a **Mode B consumer** of the shared instruction set served
-by the `lxagents-agents-base` connector. It declares no overrides.
+`MCEngine/plugin-manager` is a **Mode B consumer** of the shared instruction set served by
+the `lxagents-agents-base` connector. It declares no overrides.
 
 **Exists:** `AGENTS.md`, `.claude/CLAUDE.md`, the six indexes under `.agents/index/`,
 `.agents/rules/repository.md`, `.agents/wiki/context/repository-map.md`, this memory tree,
-`wiki/information/overview.md`, `wiki/environments/setup.md`,
-`wiki/information/architecture.md`, `wiki/logs/0/0/0/CHANGELOG.md`, `README.md`, `LICENSE`,
-the Gradle skeleton — `settings.gradle`, `build.gradle`, `gradle.properties`,
-`.gitattributes`, and the committed wrapper pinning Gradle 9.5.0 — the `api/` and `common/`
-modules, and the five `platforms/bukkit/` modules. All of it builds and tests green: 20
-tests, zero deprecation warnings under `--warning-mode all`, and
-`build/libs/TemplateEngine-0.0.0.jar` at the repository root carrying exactly one
-`plugin.yml` and one `config.yml`.
+`wiki/information/overview.md`, `wiki/information/architecture.md`,
+`wiki/environments/setup.md`, `wiki/logs/0/0/0/CHANGELOG.md`, `README.md`, `LICENSE`, the
+Gradle build — `settings.gradle`, `build.gradle`, `gradle.properties`, `.gitattributes`,
+`.gitignore`, and the committed wrapper pinning Gradle 9.5.0 — the `api/` and `common/`
+modules, the five `platforms/bukkit/` modules, and `platforms/mods/`.
 
-**`PROMPT.md`** exists at the root and is the fork setup procedure; it deletes itself once run.
+**Gone:** `PROMPT.md`. It was the one-time fork setup procedure; it has run and deleted
+itself, along with its row in the `AGENTS.md` trigger table, the template's own task record,
+and the two decisions that only described being a template.
 
-**Identity:** `gradle.properties` carries `git-org-name` and `git-repository-name` only; the
-group `io.github.mcengine` is derived from the first. The package segment (`universal`) and
-the plugin id (`Template`) live at the top of the root `build.gradle`, because they also
-appear in Java source. The namespace is `io.github.mcengine.universal`. The version is
-fixed at `0.0.0` permanently.
+**Identity:** `gradle.properties` carries `git-org-name=MCEngine` and
+`git-repository-name=plugin-manager`; the group `io.github.mcengine` is derived from the
+first. The package segment (`pluginmanager`), the plugin id (`MCPluginManager`) and the
+command alias (`mcpm`) live at the top of the root `build.gradle`, because the first two also
+appear in Java source and the third cannot be derived at all. The namespace is
+`io.github.mcengine.pluginmanager`. The version is `0.0.0` — nothing has shipped.
 
-**Verified:** the Bukkit side, `platforms/mods/core`, and the Fabric and NeoForge client and
-server modules. `./gradlew -Pmods=true build` is green and produces five jars in the root
-`build/libs/`.
+**Verified:** `./gradlew clean build --warning-mode all` green with zero deprecations and 26
+tests passing; `./gradlew -Pmods=true build` green, producing five jars in the root
+`build/libs/` — `MCPluginManagerEngine`, `MCPluginManagerFabricClient`,
+`MCPluginManagerFabricServer`, `MCPluginManagerNeoForgeClient` and
+`MCPluginManagerNeoForgeServer`, each at `0.0.0`.
 
 **Written but not building: the two Forge modules.** Behind `-Pforge=true`. NeoFormRuntime
 fetches `net.minecraftforge:forge:<version>:universal-srg` outside Gradle's dependency
@@ -50,15 +52,23 @@ ModDevGradle produce the mod jars. **Minecraft target 1.21.11** — not a 26.x r
 publishes no obfuscation mappings and therefore supports no mod toolchain at all. See
 [`../decisions/minecraft-target-version.md`](../decisions/minecraft-target-version.md).
 
+**Parallel project execution is off under `-Pmods=true`.** NeoFormRuntime's shared decompile
+lock deadlocks otherwise, and it looks exactly like Vineflower being slow. See
+[`../decisions/mods-build-parallelism.md`](../decisions/mods-build-parallelism.md).
+
+## What this is not yet
+
+**None of the plugin manager logic exists.** What runs today is the renamed skeleton the
+template left behind: a working multi-platform build, a shared contract, and an example
+`ping`/`greet` command. Nothing reaches a central server, compares a version, or downloads a
+jar.
+
 ## Next step
 
-Nothing outstanding. The template is complete and green apart from the two Forge modules,
-which are documented above and behind their own flag.
+The manager client: `config.yml` carrying a list of central servers and their tokens, the
+HTTP transport, and version comparison — then the commands and the install, update and
+delete flow through `plugins/update/`.
 
-The obvious follow-ups, none of them started:
-
-* Make Forge build, or drop it (see `wiki/environments/setup.md`).
-* Add CI. There is no `.github/workflows/`; the reference repository has none either, and it
-  was not asked for.
-* Publish `api` and `common` to GitHub Packages. The reference repository does; this one has
-  no `maven-publish` configuration, which was left out as unrequested scope.
+Both wait on the central server's API contract, which is documented in
+`MCEngine/server-expressjs` before either client is written. The full ordered plan is in
+[`../tasks/mcpluginmanager-platform.md`](../tasks/mcpluginmanager-platform.md).

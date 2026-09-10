@@ -5,7 +5,7 @@ description: Orientation for agents — what currently lives in this repository,
 
 # Repository map
 
-Orientation before touching anything. For what this template *is*, read
+Orientation before touching anything. For what this plugin *is*, read
 [`wiki/information/overview.md`](../../../wiki/information/overview.md) — the facts live
 there once, and this page links rather than repeats them.
 
@@ -15,12 +15,11 @@ there once, and this page links rather than repeats them.
 |---|---|
 | `AGENTS.md` | Entry point: shared set resolution, reading order, trigger table. |
 | `.claude/CLAUDE.md` | A single import of `../AGENTS.md`, so Claude Code and every other agent read the same instructions. Never paste content into it. |
-| `PROMPT.md` | The one-time fork setup procedure. Deletes itself when it has run. |
 | `.agents/index/` | Every index. Six files, flat, named `{scope}-index.md`. |
 | `.agents/rules/repository.md` | This repository's own rules hub. |
 | `.agents/wiki/context/` | This page. |
 | `.agents/memory/` | Task record, decisions, current state. |
-| `wiki/` | Human documentation, plus `wiki/logs/` for release history. |
+| `wiki/` | Human documentation, plus `wiki/logs/{Major}/{Minor}/{Patch}/` for version history. |
 | `README.md`, `LICENSE` | Overview and the MIT license. |
 | `settings.gradle` | Project name and the module includes. Modules are added by the task that creates them. |
 | `build.gradle` | Root build: derived group, the Java 21 toolchain applied to every module, and the root `clean`. |
@@ -28,25 +27,30 @@ there once, and this page links rather than repeats them.
 | `gradlew`, `gradlew.bat`, `gradle/wrapper/` | The committed wrapper, pinning Gradle 9.5.0. |
 | `gradle/gradle-daemon-jvm.properties` | Pins the Gradle **daemon** to Java 21, with per-OS download URLs. Generated, not hand-edited. |
 | `api/` | The shared contract. Interfaces, records, enums, one abstract dispatcher. No dependencies. |
-| `common/` | The implementation, plus `TemplateProvider` at the namespace root — the only supported way in. |
-| `platforms/bukkit/core/` | `AbstractTemplatePlugin`, the scheduler abstraction, the command, the listener, and the one `config.yml`. |
+| `common/` | The implementation, plus `MCPluginManagerProvider` at the namespace root — the only supported way in. |
+| `platforms/bukkit/core/` | `AbstractMCPluginManagerPlugin`, the scheduler abstraction, the command, the listener, and the one `config.yml`. |
 | `platforms/bukkit/{spigotmc,papermc,foliamc}/` | One entry point class each, plus a `plugin.yml`. |
-| `platforms/bukkit/engine/` | `TemplateEngine`: the universal jar, shaded, written to the root `build/libs/`. |
-| `platforms/mods/core/` | `TemplateChannel` and `TemplatePayloadCodec`. No Minecraft dependency, always in the build. |
+| `platforms/bukkit/engine/` | `MCPluginManagerEngine`: the universal jar, shaded, written to the root `build/libs/`. |
+| `platforms/mods/core/` | `MCPluginManagerChannel` and `MCPluginManagerPayloadCodec`. No Minecraft dependency, always in the build. |
 | `platforms/mods/{fabric,neoforge}/{client,server}/` | Four loader modules, built under `-Pmods=true`. Verified. |
 | `platforms/mods/forge/{client,server}/` | Written, but behind `-Pforge=true` and currently not building — see the gotcha below. |
 
 ## What is deliberately absent
 
-Nothing is outstanding. `./gradlew build` builds the shared modules, the whole Bukkit side
-and `platforms/mods/core`; `./gradlew -Pmods=true build` adds the six loader modules.
+**The plugin manager logic itself.** What exists today is the renamed skeleton the template
+left behind: a working multi-platform build, a shared contract, and an example `ping`/`greet`
+command. Nothing yet talks to a central server, compares a version, or downloads a jar. Those
+are later tasks in
+[`../../memory/tasks/mcpluginmanager-platform.md`](../../memory/tasks/mcpluginmanager-platform.md),
+and that file is also where the cross-repository ordering lives.
 
-`PROMPT.md` exists here and **is meant to disappear in a fork** — it deletes itself once
-setup has run, together with its row in the `AGENTS.md` trigger table. The intended layout, the identity values and the
-ordered task list are all recorded in
-[`../../memory/tasks/universal-plugin-template.md`](../../memory/tasks/universal-plugin-template.md).
-**Do not infer the build from this page** — it is updated by each task as that task makes
-something true, so anything absent here is genuinely absent from the repository.
+`PROMPT.md` is gone. It was the one-time fork setup procedure and it has run; it deleted
+itself along with its row in the `AGENTS.md` trigger table, which is what it was written to do.
+
+`./gradlew build` builds the shared modules, the whole Bukkit side and
+`platforms/mods/core`; `./gradlew -Pmods=true build` adds the four Fabric and NeoForge
+modules. **Do not infer the build from this page** — it is updated by each task as that task
+makes something true, so anything absent here is genuinely absent from the repository.
 
 ## Where a new file goes
 
@@ -56,7 +60,7 @@ something true, so anything absent here is genuinely absent from the repository.
 | Documentation a person reads | `wiki/{folder}/{file-name}.md` |
 | Procedure or framing only an agent needs | `.agents/wiki/{type}/{file-name}.md` |
 | Task state, a decision, current state | `.agents/memory/{type}/{file-name}.md` |
-| A record of what changed today | `wiki/logs/{yyyy}/{mm}/{dd}/CHANGELOG.md` — dated, not versioned, and ungated |
+| A record of what changed | `wiki/logs/{Major}/{Minor}/{Patch}/CHANGELOG.md` — and creating the directory is gated |
 | An index | `.agents/index/{scope}-index.md` |
 
 Never an `INDEX.md`. Never a third documentation tree. The authority is
@@ -75,24 +79,31 @@ Never an `INDEX.md`. Never a third documentation tree. The authority is
 * **`settings.gradle` tracks the directories that exist.** Each task adds its own `include`
   lines, so every commit has a settings file matching what is on disk. If you add a module,
   add its include in the same commit.
+* **A hung `-Pmods=true` build is a deadlock, not slow work.** NeoFormRuntime's shared
+  decompile lock and Gradle's parallel execution do not get along; the fix is already in
+  `settings.gradle`, and a killed run leaves stale `*.lock` files that hang the next one. See
+  [`../../memory/decisions/mods-build-parallelism.md`](../../memory/decisions/mods-build-parallelism.md).
+* **This plugin does not own the server's API.** `MCEngine/server-expressjs` defines every
+  route and payload it calls. Read the contract documentation there.
 * **The group is derived, never stored.** `build.gradle` builds it from `git-org-name`,
   lowercased. Do not add a `project-group` property alongside it — that is two sources for
   one fact.
-* **`namespaceSegment` and `pluginIdValue` live at the top of the root `build.gradle`,
-  not in `gradle.properties`.** They name the project in Java source as well as in the
-  build, and a rename that has to touch package directories and class names cannot be driven
-  from a properties file. Keeping them in one place means the Java tree and the build cannot
-  disagree. `PROMPT.md` rewrites them.
-* **The version is 0.0.0 permanently.** This is a template; there is nothing here to
-  release. A fork sets its own starting version through `PROMPT.md`.
+* **`namespaceSegment`, `pluginIdValue` and `commandAliasValue` live at the top of the root
+  `build.gradle`, not in `gradle.properties`.** They name the project in Java source as well
+  as in the build, and a rename that has to touch package directories and class names cannot
+  be driven from a properties file. Keeping them in one place means the Java tree and the
+  build cannot disagree.
+* **The version is `0.0.0` because nothing has shipped**, not because it is pinned. All
+  three MCPluginManager repositories sit there together, and moving it needs the user to
+  ask.
 * **Configuration cache is on.** A task that closes over `project` at execution time will
   fail. Capture what you need at configuration time, as the root `clean` does.
 * **`api` takes no dependencies, ever.** The moment it depends on Bukkit or a mod loader it
   stops being the thing all four platforms can share.
-* **Platform modules never import `...universal.common`.** They go through
-  `TemplateProvider`. If the facade does not expose what you need, add a method to it.
-* **`AbstractTemplateService.handle` has no `default` branch on purpose.** Adding a
-  `TemplateAction` constant is meant to break the build until every platform handles it.
+* **Platform modules never import `...pluginmanager.common`.** They go through
+  `MCPluginManagerProvider`. If the facade does not expose what you need, add a method to it.
+* **`AbstractMCPluginManagerService.handle` has no `default` branch on purpose.** Adding a
+  `MCPluginManagerAction` constant is meant to break the build until every platform handles it.
 * **A platform entry point declares `createScheduler` and nothing else.** A test in each
   module asserts exactly that. Shared logic goes in `platforms/bukkit/core`.
 * **The three platform modules are `compileOnly` on api, common and core, with
@@ -103,7 +114,7 @@ Never an `INDEX.md`. Never a third documentation tree. The authority is
 * **The client half of a mod decides nothing.** It sends and renders; the server owns the
   state and takes the player id from the connection, never from the payload. Do not move a
   decision to the client to save a round trip.
-* **`TemplateAction` is encoded by name, not ordinal.** Reordering the enum must not change
+* **`MCPluginManagerAction` is encoded by name, not ordinal.** Reordering the enum must not change
   the wire format.
 * **The payload wrapper is duplicated per loader on purpose** — `CustomPayload` is a
   Minecraft type, and Fabric sees it under Yarn while Forge and NeoForge see it under Mojang

@@ -1,18 +1,20 @@
 ---
 name: agents-entry-point
-description: Universal entry point for agents working in the universal-template repository — shared set resolution, reading order, and the auto-activation trigger table.
+description: Entry point for MCEngine/plugin-manager — shared set resolution, reading order, and the auto-activation trigger table.
 ---
 
 # AGENTS.md
 
-This repository is **`MCEngine/universal-template`**: a forkable template for a universal
-Minecraft plugin. One Gradle multi-project build carries both halves of such a project — a
-Bukkit server plugin (`platforms/bukkit/`, covering SpigotMC, PaperMC and FoliaMC plus a
-single universal engine jar) and standalone mods (`platforms/mods/`, covering Forge, Fabric
-and NeoForge, each split into a client and a server jar) — over a shared `api/` contract and
-a `common/` implementation. Forks rename it and build on it; it is not a plugin in its own
-right — **start by running [`PROMPT.md`](PROMPT.md)**, which asks what the project should be
-and rewrites the repository to match.
+This repository is **`MCEngine/plugin-manager`**: **MCPluginManager**, a plugin that
+installs, updates and removes other plugins on a Minecraft server by talking to a central
+catalogue and control server. One Gradle multi-project build carries both halves — a Bukkit
+server plugin (`platforms/bukkit/`, covering SpigotMC, PaperMC and FoliaMC plus a single
+universal engine jar) and standalone mods (`platforms/mods/`, covering Forge, Fabric and
+NeoForge, each split into a client and a server jar) — over a shared `api/` contract and a
+`common/` implementation.
+
+It is one of three repositories. `MCEngine/server-expressjs` is the central server it calls,
+and `MCEngine/client-reactjs` is the web panel a person administers from.
 
 ## Shared Instruction Set
 
@@ -109,18 +111,10 @@ truth, with this repository's own rows appended below.
 
 ### This repository's own rows
 
-| When you are about to… | Load and obey |
-|---|---|
-| Set this fork up for the first time, or rename it | [`PROMPT.md`](PROMPT.md) |
-
-[`PROMPT.md`](PROMPT.md) is the one-time setup procedure: it asks what the project should be
-called and what it does, rewrites the build, the Java tree and the documentation, and then
-deletes itself along with this row. **If `PROMPT.md` is absent, setup has already happened**
-— this row goes with it.
-
-Beyond that this repository carries the mandatory core set only. Local instruction files are
-added under `.agents/{folder}/{file}.md` through the discovery protocol below, and each one
-gets a row here in the same commit that creates it.
+This repository carries the mandatory core set only, so it has no extra rows beyond the two
+already in the table above. Local instruction files are added under
+`.agents/{folder}/{file}.md` through the discovery protocol below, and each one gets a row
+here in the same commit that creates it.
 
 ## Reading order (mandatory)
 
@@ -200,14 +194,14 @@ verified. Memory under `.agents/memory/` is written freely and automatically —
 ## Version rule
 
 Never change the project version without explicit user approval — see
-`{shared}/rules/versioning.md`. In this repository the answer is effectively always no:
-`project-version` in `gradle.properties` is fixed at `0.0.0`, because a template has nothing
-to release.
+`{shared}/rules/versioning.md`. `project-version` in `gradle.properties` is the carrier and
+currently reads `0.0.0`: nothing has shipped, and all three MCPluginManager repositories sit
+at `0.0.0` together.
 
-For the same reason this repository's logs are **dated, not versioned** —
-`wiki/logs/{yyyy}/{mm}/{dd}/CHANGELOG.md`. A date directory is not a version claim, so
-creating one is not gated; record the day's work as you land it. The carriers and the full
-rule are in [`.agents/rules/repository.md`](.agents/rules/repository.md).
+Logs are **versioned** — `wiki/logs/{Major}/{Minor}/{Patch}/CHANGELOG.md`. Creating one of
+those directories is itself a version claim and is gated the same way; appending to the one
+that already exists is not. The carriers and the full rule are in
+[`.agents/rules/repository.md`](.agents/rules/repository.md).
 
 ## No session links
 
