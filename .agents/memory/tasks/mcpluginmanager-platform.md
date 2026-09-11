@@ -231,3 +231,60 @@ them; every relative link in every markdown file resolves; and the sweep for `Te
 
 Next task depends on: nothing in this repository. The next work here — the manager client —
 waits on the central server's API contract, which task 6 documents.
+
+### Task 18 — feat/manager-client
+
+The half of the plugin that talks to a central server: the contract types, version comparison,
+checksums, a JSON reader, the HTTP client, and the configuration.
+
+**No dependency was added, and that is the whole reason three things are hand-written.** A
+Bukkit plugin that shades Gson or Jackson competes with whatever version the server already
+has on its classpath, and the failure surfaces as an unrelated plugin breaking. So: the JSON
+reader is 250 lines and read-only; the HTTP client is `java.net.http`, which the JDK already
+has; and version comparison is twenty lines rather than a semver library.
+
+**`Versions.compare` must agree with the server's `version_norm` or the system misbehaves
+quietly** — the server would offer an update this plugin then declines. Both implement the
+same rule, and the test asserts the bug first (`"1.9.0".compareTo("1.10.0") > 0` is true)
+before asserting the fix.
+
+**Five refusals, each in the type rather than in a handler:**
+
+* `CentralServer` refuses anything but `https`, except on localhost. This plugin sends a
+  bearer token and receives code it will install; over `http` both are readable and alterable
+  by anything on the path.
+* `CentralServer.describe()` exists because a record's `toString()` prints every component,
+  and one of them is a credential. Nothing logs a server any other way.
+* `DesiredChange` refuses a plugin id containing a separator, `..` or a NUL. A plugin id
+  becomes a file name, so it is checked at the boundary rather than at each use.
+* `DesiredChange` refuses a non-delete change with no 64-character hex checksum. A download
+  with nothing to verify against is not something this plugin will install.
+* `DesiredState` raises a poll interval below thirty seconds. The server sets the interval
+  because it knows how loaded it is, but a zero from a misconfigured one would make this a
+  tight loop against it.
+
+**The download is staged, verified, and only then moved.** A jar that fails its checksum must
+never exist at a path anything might load from, not even briefly — so it lands in a temporary
+file beside the target, is hashed, and is moved atomically only on a match. The failure path
+deletes it, and a test asserts the directory is empty afterwards.
+
+**Redirects are never followed.** `HttpClient.Redirect.NEVER`, with a test that a 302 is an
+error. The entire trust model is that this plugin fetches only from a server it was configured
+with; a redirect is a request to fetch code from somewhere else.
+
+**An action this version does not understand is skipped, not fatal.** A newer server may
+describe work that did not exist when this jar was built, and failing the whole poll over one
+unknown entry would mean an old plugin stops managing anything the moment the server gains a
+feature.
+
+**`ManagerConfig` skips a bad entry rather than failing startup**, with a logged reason — an
+operator with three catalogues and one typo should lose that catalogue, not the plugin. The
+commonest case, a fresh config with the placeholder token still in it, is said plainly rather
+than reported as a validation error.
+
+Verified: `./gradlew build` green, 44 tests in `common` — the HTTP client tests drive a real
+`com.sun.net.httpserver` on loopback rather than a mock, because what is worth testing is the
+wire behaviour and a mock would only assert that the code calls the methods it calls.
+
+Next task depends on: `ManagerClient`, `ManagerConfig` and `Versions`, which the commands and
+the apply flow are written against.
