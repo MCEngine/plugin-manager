@@ -71,6 +71,15 @@ public final class Schedulers {
     }
 
     /**
+     * Convenience for {@link PlatformScheduler#runGlobal}.
+     *
+     * @param task The work to run.
+     */
+    public static void runGlobal(Runnable task) {
+        get().runGlobal(task);
+    }
+
+    /**
      * Convenience for {@link PlatformScheduler#runAsync}.
      *
      * @param task The work to run.

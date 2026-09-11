@@ -31,7 +31,7 @@ command alias (`mcpm`) live at the top of the root `build.gradle`, because the f
 appear in Java source and the third cannot be derived at all. The namespace is
 `io.github.mcengine.pluginmanager`. The version is `0.0.0` — nothing has shipped.
 
-**Verified:** `./gradlew clean build --warning-mode all` green with zero deprecations and 26
+**Verified:** `./gradlew clean build --warning-mode all` green with zero deprecations and 82
 tests passing; `./gradlew -Pmods=true build` green, producing five jars in the root
 `build/libs/` — `MCPluginManagerEngine`, `MCPluginManagerFabricClient`,
 `MCPluginManagerFabricServer`, `MCPluginManagerNeoForgeClient` and
@@ -58,17 +58,18 @@ lock deadlocks otherwise, and it looks exactly like Vineflower being slow. See
 
 ## What this is not yet
 
-**None of the plugin manager logic exists.** What runs today is the renamed skeleton the
-template left behind: a working multi-platform build, a shared contract, and an example
-`ping`/`greet` command. Nothing reaches a central server, compares a version, or downloads a
-jar.
+**The mod half does nothing with the manager.** `platforms/mods/` still carries the channel
+and the payload codec the template left behind; the manager contract is Bukkit-side only.
+
+There is no signature verification — the plugin checks that a download matches the checksum
+the central server declared, which proves it was not altered in transit but not who published
+it. That gap is recorded in `MCEngine/server-expressjs` at
+`wiki/security/artifact-upload.md` under `Open`, and closing it needs both sides.
+
+`register` prints the server key rather than writing it into `config.yml`, because saving
+would drop every comment in the file.
 
 ## Next step
 
-The manager client: `config.yml` carrying a list of central servers and their tokens, the
-HTTP transport, and version comparison — then the commands and the install, update and
-delete flow through `plugins/update/`.
-
-Both wait on the central server's API contract, which is documented in
-`MCEngine/server-expressjs` before either client is written. The full ordered plan is in
-[`../tasks/mcpluginmanager-platform.md`](../tasks/mcpluginmanager-platform.md).
+Nothing but the release task, which fills the plan's `PR` column and closes the record. The
+full ordered plan is in [`../tasks/mcpluginmanager-platform.md`](../tasks/mcpluginmanager-platform.md).

@@ -32,17 +32,21 @@ there once, and this page links rather than repeats them.
 | `platforms/bukkit/{spigotmc,papermc,foliamc}/` | One entry point class each, plus a `plugin.yml`. |
 | `platforms/bukkit/engine/` | `MCPluginManagerEngine`: the universal jar, shaded, written to the root `build/libs/`. |
 | `platforms/mods/core/` | `MCPluginManagerChannel` and `MCPluginManagerPayloadCodec`. No Minecraft dependency, always in the build. |
+| `api/.../manager/` | The manager contract: a central server, the changes it asks for, the inventory this one reports. |
+| `common/.../manager/` | The HTTP client, versions, checksums, the JSON reader, the inventory reader, staging, and the service that sequences them. |
+| `platforms/bukkit/core/.../manager/` | `ManagerConfig` and `ManagerRuntime` — the config, and the poll loop. |
 | `platforms/mods/{fabric,neoforge}/{client,server}/` | Four loader modules, built under `-Pmods=true`. Verified. |
 | `platforms/mods/forge/{client,server}/` | Written, but behind `-Pforge=true` and currently not building — see the gotcha below. |
 
 ## What is deliberately absent
 
-**The plugin manager logic itself.** What exists today is the renamed skeleton the template
-left behind: a working multi-platform build, a shared contract, and an example `ping`/`greet`
-command. Nothing yet talks to a central server, compares a version, or downloads a jar. Those
-are later tasks in
-[`../../memory/tasks/mcpluginmanager-platform.md`](../../memory/tasks/mcpluginmanager-platform.md),
-and that file is also where the cross-repository ordering lives.
+**The mod half does nothing with the manager.** `platforms/mods/` carries the channel and the
+payload codec the template left behind; the manager contract is Bukkit-side only.
+
+**There is no signature verification.** A download is checked against the checksum the
+central server declared, which proves it was not altered in transit but not who published it.
+The gap is recorded in `MCEngine/server-expressjs` under `Open` in
+`wiki/security/artifact-upload.md`, and closing it needs both sides.
 
 `PROMPT.md` is gone. It was the one-time fork setup procedure and it has run; it deleted
 itself along with its row in the `AGENTS.md` trigger table, which is what it was written to do.
@@ -85,6 +89,16 @@ Never an `INDEX.md`. Never a third documentation tree. The authority is
   [`../../memory/decisions/mods-build-parallelism.md`](../../memory/decisions/mods-build-parallelism.md).
 * **This plugin does not own the server's API.** `MCEngine/server-expressjs` defines every
   route and payload it calls. Read the contract documentation there.
+* **Nothing shared may call `Bukkit.getScheduler()`.** It throws on Folia. Use
+  `Schedulers.runGlobal`, `runAsync` or `runForEntity` — which is the entire reason the
+  abstraction exists.
+* **Nothing loads or unloads a plugin.** Bukkit has no supported way to. An update goes into
+  `plugins/update/` for the server to apply on restart, and a delete happens at shutdown.
+* **A staged jar takes the installed jar's file name.** `EssentialsX-2.20.1.jar` declares
+  `name: Essentials`; staging it under the plugin id would load a second copy rather than
+  replace the first.
+* **`Versions.compare` must agree with the server's `version_norm`.** If they disagree the
+  server offers updates the plugin then declines, and nothing reports an error.
 * **The group is derived, never stored.** `build.gradle` builds it from `git-org-name`,
   lowercased. Do not add a `project-group` property alongside it — that is two sources for
   one fact.

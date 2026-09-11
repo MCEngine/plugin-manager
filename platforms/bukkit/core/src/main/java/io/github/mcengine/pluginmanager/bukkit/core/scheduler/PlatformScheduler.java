@@ -30,6 +30,20 @@ public interface PlatformScheduler {
     void runForEntity(Entity entity, Runnable task, Runnable retired);
 
     /**
+     * Runs a task on the thread that owns global server state.
+     *
+     * <p>This exists because {@code Bukkit.getScheduler()} throws
+     * {@code UnsupportedOperationException} on Folia — there is no single main
+     * thread there, and touching the command map or the event registry from an
+     * arbitrary thread is not safe on any of the three. Shared code that needs
+     * to be on the right thread calls this and never Bukkit's scheduler
+     * directly.</p>
+     *
+     * @param task The work to run.
+     */
+    void runGlobal(Runnable task);
+
+    /**
      * Runs a task off the main thread.
      *
      * @param task The work to run.

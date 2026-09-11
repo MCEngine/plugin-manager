@@ -3,6 +3,8 @@ package io.github.mcengine.pluginmanager.bukkit.core;
 import io.github.mcengine.pluginmanager.MCPluginManagerProvider;
 import io.github.mcengine.pluginmanager.bukkit.core.commands.MCPluginManagerCommand;
 import io.github.mcengine.pluginmanager.bukkit.core.listeners.MCPluginManagerJoinListener;
+import io.github.mcengine.pluginmanager.bukkit.core.manager.ManagerConfig;
+import io.github.mcengine.pluginmanager.bukkit.core.manager.ManagerRuntime;
 import io.github.mcengine.pluginmanager.bukkit.core.scheduler.PlatformScheduler;
 import io.github.mcengine.pluginmanager.bukkit.core.scheduler.Schedulers;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,6 +24,11 @@ import java.util.Locale;
  * of it exist and two of them are about to drift.</p>
  */
 public abstract class AbstractMCPluginManagerPlugin extends JavaPlugin {
+
+    /**
+     * The manager, built while the plugin enables and stopped while it disables.
+     */
+    private ManagerRuntime manager;
 
     /**
      * Supplies the scheduler installed while the plugin enables.
@@ -53,11 +60,10 @@ public abstract class AbstractMCPluginManagerPlugin extends JavaPlugin {
         provider.initialize().whenComplete((ignored, error) -> {
             if (error != null) {
                 getLogger().severe("Failed to start the service: " + error.getMessage() + ". Disabling.");
-                getServer().getScheduler().runTask(this, () ->
-                    getServer().getPluginManager().disablePlugin(this));
+                Schedulers.get().runGlobal(() -> getServer().getPluginManager().disablePlugin(this));
                 return;
             }
-            getServer().getScheduler().runTask(this, this::registerHandlers);
+            Schedulers.get().runGlobal(this::registerHandlers);
         });
     }
 
@@ -65,14 +71,24 @@ public abstract class AbstractMCPluginManagerPlugin extends JavaPlugin {
      * Registers the command and the listener, on the main thread.
      *
      * <p>Bukkit's command map and event registry are not safe to touch from an
-     * arbitrary thread, so this never runs directly from the future's callback.</p>
+     * arbitrary thread, so this never runs directly from the future's callback.
+     * It goes through the platform scheduler rather than {@code Bukkit.getScheduler()},
+     * which throws on Folia.</p>
      */
     private void registerHandlers() {
         // The command name is the plugin name lowercased, and plugin.yml declares
         // both from the same `pluginid` property. Reading it back this way means
         // renaming a fork does not leave a hardcoded string behind here.
-        getCommand(getName().toLowerCase(Locale.ROOT)).setExecutor(new MCPluginManagerCommand());
+        manager = new ManagerRuntime(this, ManagerConfig.from(getConfig(), getLogger()));
+
+        MCPluginManagerCommand executor = new MCPluginManagerCommand(manager);
+        var command = getCommand(getName().toLowerCase(Locale.ROOT));
+        command.setExecutor(executor);
+        command.setTabCompleter(executor);
+
         getServer().getPluginManager().registerEvents(new MCPluginManagerJoinListener(), this);
+
+        manager.start();
         getLogger().info("Enabled.");
     }
 
@@ -82,6 +98,13 @@ public abstract class AbstractMCPluginManagerPlugin extends JavaPlugin {
      */
     @Override
     public void onDisable() {
+        // Stopped first: shutdown is the only moment a loaded jar can be
+        // deleted, and this is where pending removals are performed.
+        if (manager != null) {
+            manager.stop();
+            manager = null;
+        }
+
         if (MCPluginManagerProvider.isReady()) {
             MCPluginManagerProvider.instance.shutdown();
             MCPluginManagerProvider.instance = null;

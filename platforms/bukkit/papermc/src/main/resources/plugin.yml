@@ -4,9 +4,17 @@ main: ${main}
 api-version: '${apiVersion}'
 folia-supported: ${foliaSupported}
 author: ${author}
-description: Plugin manager for Minecraft servers
+description: Installs, updates and removes plugins from a central catalogue
 commands:
   ${command}:
-    description: The example command this plugin ships with
-    usage: /${command} <ping|greet [text]>
+    description: Manage this server's plugins against a central catalogue
+    usage: /${command} <status|servers|check|apply|report|register|pending>
     aliases: [${commandAlias}]
+    permission: mcpluginmanager.admin
+
+permissions:
+  mcpluginmanager.admin:
+    description: Install, update and remove plugins on this server
+    # Operators only. This command installs code; it is not something to hand
+    # out by default, and a server that wants to delegate it can grant the node.
+    default: op

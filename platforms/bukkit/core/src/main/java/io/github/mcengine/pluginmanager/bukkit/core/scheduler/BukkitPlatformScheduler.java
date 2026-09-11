@@ -45,6 +45,16 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
     }
 
     /**
+     * Runs the task on the main thread, which owns all global state here.
+     *
+     * @param task The work to run.
+     */
+    @Override
+    public void runGlobal(Runnable task) {
+        plugin.getServer().getScheduler().runTask(plugin, task);
+    }
+
+    /**
      * Runs the task on Bukkit's async pool.
      *
      * @param task The work to run.
