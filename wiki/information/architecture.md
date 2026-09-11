@@ -10,16 +10,16 @@ the project *is*, see [Project Overview](overview.md); for building it, see
 
 | Module | Package | Contains |
 |---|---|---|
-| `api` | `io.github.mcengine.universal.api` | The shared contract: interfaces, records, enums, and one abstract dispatcher. No dependencies at all. |
-| `common` | `io.github.mcengine.universal` and `.common` | The implementation, plus the single public facade `TemplateProvider`. |
+| `api` | `io.github.mcengine.pluginmanager.api` | The shared contract: interfaces, records, enums, and one abstract dispatcher. No dependencies at all. |
+| `common` | `io.github.mcengine.pluginmanager` and `.common` | The implementation, plus the single public facade `MCPluginManagerProvider`. |
 
-| `platforms/bukkit/core` | `...bukkit.core` | `AbstractTemplatePlugin`, the scheduler abstraction, the command, and the listener. |
-| `platforms/bukkit/spigotmc` | `...bukkit.spigotmc` | `TemplateSpigotMC` — the entry point, and nothing else. |
-| `platforms/bukkit/papermc` | `...bukkit.papermc` | `TemplatePaperMC`. |
-| `platforms/bukkit/foliamc` | `...bukkit.foliamc` | `TemplateFoliaMC` and `FoliaPlatformScheduler`. |
-| `platforms/bukkit/engine` | `...bukkit.engine` | `TemplateEngine` — the universal jar that bundles all three. |
+| `platforms/bukkit/core` | `...bukkit.core` | `AbstractMCPluginManagerPlugin`, the scheduler abstraction, the command, and the listener. |
+| `platforms/bukkit/spigotmc` | `...bukkit.spigotmc` | `MCPluginManagerSpigotMC` — the entry point, and nothing else. |
+| `platforms/bukkit/papermc` | `...bukkit.papermc` | `MCPluginManagerPaperMC`. |
+| `platforms/bukkit/foliamc` | `...bukkit.foliamc` | `MCPluginManagerFoliaMC` and `FoliaPlatformScheduler`. |
+| `platforms/bukkit/engine` | `...bukkit.engine` | `MCPluginManagerEngine` — the universal jar that bundles all three. |
 
-| `platforms/mods/core` | `...mod.core` | `TemplateChannel` and `TemplatePayloadCodec`. No Minecraft dependency. |
+| `platforms/mods/core` | `...mod.core` | `MCPluginManagerChannel` and `MCPluginManagerPayloadCodec`. No Minecraft dependency. |
 | `platforms/mods/{forge,fabric,neoforge}/client` | `...mod.<loader>.client` | Sends actions; renders answers. |
 | `platforms/mods/{forge,fabric,neoforge}/server` | `...mod.<loader>.server` | Decodes, runs the service, replies. |
 
@@ -28,11 +28,11 @@ the project *is*, see [Project Overview](overview.md); for building it, see
 ### One bootstrap, three entry points
 
 Enabling, config, command and listener registration, and starting the service are identical
-on all three servers, so they live once in `AbstractTemplatePlugin`. Each platform module
+on all three servers, so they live once in `AbstractMCPluginManagerPlugin`. Each platform module
 supplies only its scheduler:
 
 ```java
-public class TemplateSpigotMC extends AbstractTemplatePlugin {
+public class MCPluginManagerSpigotMC extends AbstractMCPluginManagerPlugin {
     @Override
     protected PlatformScheduler createScheduler() {
         return new BukkitPlatformScheduler(this);
@@ -55,7 +55,7 @@ Paper never invoke. Designing for the strictest case costs the others nothing.
 
 ### The universal engine jar
 
-`TemplateEngine` detects the server at enable time by probing for classes —
+`MCPluginManagerEngine` detects the server at enable time by probing for classes —
 `io.papermc.paper.threadedregions.RegionizedServer` means Folia,
 `com.destroystokyo.paper.PaperConfig` means Paper, otherwise Spigot — and installs the
 matching scheduler.
@@ -74,40 +74,42 @@ bundled platform jar, keeping only its own, so the shipped jar has a single desc
 
 | Jar | Built to | Distributed |
 |---|---|---|
-| `TemplateEngine-{version}.jar` | `build/libs/` at the repository root | Yes |
-| `TemplateSpigotMC-{version}.jar` etc. | The module's own `build/libs/` | No — bundled into the engine |
-| `universal-template-api/common/bukkit-core-{version}.jar` | The module's own `build/libs/` | No |
+| `MCPluginManagerEngine-{version}.jar` | `build/libs/` at the repository root | Yes |
+| `MCPluginManagerSpigotMC-{version}.jar` etc. | The module's own `build/libs/` | No — bundled into the engine |
+| `plugin-manager-api/common/bukkit-core-{version}.jar` | The module's own `build/libs/` | No |
 
 ### Renaming stays a one-file edit
 
-A fork's rename is one guided pass, not a scattered edit. `gradle.properties` carries only
-the GitHub owner and repository name, from which the Maven group is derived. The two values
-that name the project in code — the package segment (`universal`) and the plugin id
-(`Template`) — sit at the top of the root `build.gradle`, next to each other, and every
-module reads them through `namespace`, `pluginId`, and `commandName`.
+The project's identity is spelled out once, not scattered. `gradle.properties` carries only
+the GitHub owner and repository name, from which the Maven group is derived. The three values
+that name the project in code — the package segment (`pluginmanager`), the plugin id
+(`MCPluginManager`) and the command alias (`mcpm`) — sit at the top of the root
+`build.gradle`, next to each other, and every module reads them through `namespace`,
+`pluginId`, `commandName` and `commandAlias`.
 
-So the plugin descriptor's `main:`, the jar base names, the mod ids, and the `/template`
-command are all generated. What a fork edits by hand is the package directories and the
-`Template*` class names, which no build system can rewrite for it — and `PROMPT.md` at the
-repository root walks through exactly that, then deletes itself.
+So the plugin descriptor's `main:`, the jar base names, the mod ids, and the
+`/mcpluginmanager` command are all generated. The only things a rename touches by hand are
+the package directories and the `MCPluginManager*` class names, which no build system can
+rewrite for it, plus three string literals that are Java annotations and constants: the
+channel namespace in `MCPluginManagerChannel`, and the Forge and NeoForge `@Mod` ids.
 
 ## The shared contract
 
 `api` depends on nothing: not Bukkit, not a mod loader, not `common`. That is the whole point
 of it. A Bukkit listener, a Fabric client, and a NeoForge server all compile against the same
-`TemplateAction`, `TemplateRequest`, and `TemplateResponse`, so the protocol between them is
+`MCPluginManagerAction`, `MCPluginManagerRequest`, and `MCPluginManagerResponse`, so the protocol between them is
 checked by the compiler rather than described in a document that drifts.
 
 Three shapes carry the contract:
 
-- **`TemplateAction`** — the wire vocabulary. Adding a constant changes the protocol.
-- **`TemplateRequest` / `TemplateResponse`** — immutable records. `TemplateRequest`
+- **`MCPluginManagerAction`** — the wire vocabulary. Adding a constant changes the protocol.
+- **`MCPluginManagerRequest` / `MCPluginManagerResponse`** — immutable records. `MCPluginManagerRequest`
   normalizes a missing payload to the empty string in its compact constructor, so no handler
   has to null-check it.
-- **`TemplateService`** — the behaviour, with `AbstractTemplateService` supplying the
+- **`MCPluginManagerService`** — the behaviour, with `AbstractMCPluginManagerService` supplying the
   dispatch every implementation would otherwise write itself.
 
-`AbstractTemplateService.handle` switches over the enum with **no `default` branch**. Adding
+`AbstractMCPluginManagerService.handle` switches over the enum with **no `default` branch**. Adding
 an action therefore breaks the build until a handler exists, rather than reaching production
 and failing on whichever platform received the new action first.
 
@@ -121,7 +123,7 @@ is a visible stall for every player online.
 ## One way in
 
 Every platform module reaches the implementation through
-`io.github.mcengine.universal.TemplateProvider`, and nothing else.
+`io.github.mcengine.pluginmanager.MCPluginManagerProvider`, and nothing else.
 
 The facade deliberately sits at the **root of the namespace**, one package above the
 `common` implementation classes it wraps, so someone opening the source tree meets the
@@ -130,7 +132,7 @@ service privately and returns it from no method, so there is no supported way to
 around it.
 
 The rule that follows: **a platform module never imports from
-`io.github.mcengine.universal.common`.** If a platform needs something the facade
+`io.github.mcengine.pluginmanager.common`.** If a platform needs something the facade
 does not expose, the fix is a method on the facade, not an import.
 
 ## Dependency rules
@@ -161,12 +163,12 @@ the player's identity from the connection, never from the payload, for the same 
 
 ### One wire format, shared
 
-`platforms/mods/core` holds `TemplateChannel` (the two channel identifiers) and
-`TemplatePayloadCodec` (the byte layout), and depends only on `api` and the JDK. Both halves
+`platforms/mods/core` holds `MCPluginManagerChannel` (the two channel identifiers) and
+`MCPluginManagerPayloadCodec` (the byte layout), and depends only on `api` and the JDK. Both halves
 of every loader encode and decode through it, so client and server cannot disagree about the
 format — the compiler and the codec's round-trip tests enforce it.
 
-The action is written **by name, not by ordinal**: reordering `TemplateAction` would
+The action is written **by name, not by ordinal**: reordering `MCPluginManagerAction` would
 otherwise silently change the meaning of every packet already in flight.
 
 What is duplicated per loader is only the payload wrapper, because `CustomPayload` is a

@@ -1,13 +1,13 @@
 ---
 name: memory-decisions-minecraft-target-version
-description: Why the template targets Minecraft 1.21.11 and not a 26.x release — mappings, and what to check before retargeting.
+description: Why this project targets Minecraft 1.21.11 and not a 26.x release — mappings, and what to check before retargeting.
 ---
 
-# Decision: the template targets Minecraft 1.21.11
+# Decision: this project targets Minecraft 1.21.11
 
 ## Context
 
-The template originally targeted **26.1.2**, matching the reference repository
+This repository originally targeted **26.1.2**, matching the reference repository
 `MCOriax/mcidentity`. The Bukkit side built fine there — Spigot, Paper, and Folia publish
 API jars for it and none of them need obfuscation mappings.
 
@@ -35,17 +35,18 @@ Loom would fix.
 
 ## Options
 
-* **Keep 26.1.2, ship no mods.** The Bukkit half works; the template delivers half of what
+* **Keep 26.1.2, ship no mods.** The Bukkit half works; the project delivers half of what
   it promises.
 * **Bukkit on 26.1.2, mods on 1.21.11.** Everything builds, but a 1.21.11 client mod cannot
   talk to a 26.1.2 server — which is precisely the thing the shared contract and the message
   channel exist to make work.
-* **Everything on 1.21.11.** One game version across the template.
+* **Everything on 1.21.11.** One game version across the whole repository.
 
 ## Choice
 
 Everything on 1.21.11, on Java 21. Both halves target the same game, so the client mod and
-the server plugin can actually talk to each other, which is the template's whole premise.
+the server plugin can actually talk to each other, which is the whole premise of carrying
+both halves in one repository.
 
 Every platform ships for it: spigot-api `1.21.11-R0.2-SNAPSHOT`, paper-api and folia-api
 `1.21.11-R0.1-SNAPSHOT`, Forge `1.21.11-61.2.1`, NeoForge `21.11.45`, Fabric API
@@ -61,4 +62,4 @@ Every platform ships for it: spigot-api `1.21.11-R0.2-SNAPSHOT`, paper-api and f
 * **Before retargeting again, check that the version publishes mappings.** A release without
   `client_mappings` will build the Bukkit side and silently fail the mod side.
 * This supersedes the Minecraft target row in
-  [`template-identity-values.md`](template-identity-values.md).
+  [`namespace-and-plugin-id.md`](namespace-and-plugin-id.md).

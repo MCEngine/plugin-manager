@@ -53,7 +53,7 @@ resolution**. Declaring `maven.minecraftforge.net` in the module, or in the root
 and returns HTTP 200.
 
 They sit behind their own flag so that `-Pmods=true build` stays green rather than shipping
-a template whose documented command fails.
+a build whose documented command fails.
 
 If you need Forge, the things worth trying, in order: check whether a newer ModDevGradle
 release fixes the repository plumbing; try ForgeGradle instead of ModDevGradle's legacy
@@ -72,16 +72,19 @@ the universal engine jar — stay in their own module's `build/libs/`.
 ## Configuration
 
 `gradle.properties` carries the GitHub coordinates (`git-org-name`, `git-repository-name`),
-the version, and every Minecraft and loader version to target. The two names that appear in
-code — the package segment and the plugin id — are at the top of the root `build.gradle`.
+the version, and every Minecraft and loader version to target. The three names that appear in
+code — the package segment, the plugin id and the command alias — are at the top of the root
+`build.gradle`.
 
-Do not edit these by hand for a fork. Run `PROMPT.md` at the repository root: it asks what
-the project should be called, rewrites all of it including the package directories and class
-names, and then deletes itself.
+Changing any of them is a rename, not an edit. The build regenerates the descriptors, the jar
+names, the mod ids and the command, but it cannot move package directories or rewrite class
+names — and it cannot reach the three literals that are Java annotations and constants
+either. Renaming means doing all of that in one pass; a half-applied rename still builds,
+which is what makes it worse than none.
 
 ## Retargeting the Minecraft version
 
-The template targets **1.21.11**, and not every version is a valid target. Mojang stopped
+This project targets **1.21.11**, and not every version is a valid target. Mojang stopped
 publishing obfuscation mappings with the 26.x line, and Yarn has no 26.x builds, so Fabric
 Loom and ModDevGradle cannot set up for those versions at all — the Bukkit side would build
 and the mods would not.

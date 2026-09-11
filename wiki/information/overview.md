@@ -8,12 +8,33 @@
 |---|---|
 | **Platform** | [github.com](https://github.com) |
 | **Organization** | [MCEngine](https://github.com/MCEngine) |
-| **Repository** | [universal-template](https://github.com/MCEngine/universal-template) |
+| **Repository** | [plugin-manager](https://github.com/MCEngine/plugin-manager) |
+| **Plugin id** | `MCPluginManager` |
+| **Namespace** | `io.github.mcengine.pluginmanager` |
+| **Command** | `/mcpluginmanager`, alias `/mcpm` |
 
 ## What this is
 
-A **template for a universal Minecraft plugin** — a starting point you fork, rename, and
-build on. It is not a plugin you install.
+**MCPluginManager** installs, updates and removes plugins on a Minecraft server, driven from
+a central server rather than by hand.
+
+An operator running twenty plugins across four servers has no good way to answer "which of
+these is out of date, and where". An author publishing a new jar has no good way to get it
+onto those servers other than telling people to download it. This plugin is the end of that
+loop that runs on the server: it reports what is installed, asks what should be installed,
+and applies the difference.
+
+## The three repositories
+
+| Repository | Role |
+|---|---|
+| `MCEngine/plugin-manager` | This one. The plugin, and the mod half. |
+| `MCEngine/server-expressjs` | The central server: accounts, the artifact catalogue, tokens, the fleet control plane. |
+| `MCEngine/client-reactjs` | The web panel a person publishes and administers from. |
+
+This repository owns none of the server's HTTP contract. It is a client of it.
+
+## Why both halves live here
 
 "Universal" means one repository covers both halves of a modern Minecraft project, which are
 usually split across two:
@@ -28,28 +49,35 @@ usually split across two:
 Both halves sit on top of one shared contract, so behaviour is defined once and the platform
 modules only supply what is genuinely platform-specific.
 
-## Why one repository
-
 A plugin and its companion mod normally drift apart: they live in separate repositories, on
 separate release cadences, and the message protocol between them is written down twice.
 Keeping them together means the shared contract is a compile-time dependency for both sides
 rather than a document, so a change that breaks the protocol fails the build instead of
 failing in production.
 
-## What a fork changes
+## Three constraints that shape the design
 
-Run `PROMPT.md` at the repository root. It asks what the project is — plugin id, version,
-organization and repository, license, group and namespace, and what the README and wiki
-should say — applies the answers across the build, the sources and the documentation, and
-then deletes itself, because a setup prompt that stays behind is just clutter in someone
-else's repository.
+**Bukkit cannot safely unload a plugin.** There is no supported `unload`, and classloader
+tricks leak. So an update is downloaded, checksummed, and written into `plugins/update/`,
+which the server itself applies on the next restart; a removal is marked and performed at
+shutdown, because a loaded jar cannot be deleted on Windows while the server runs.
+
+**Folia has no single main thread.** It divides the world into independently ticking regions,
+so work is scheduled through `AsyncScheduler` for the network and disk, and folded back
+through `GlobalRegionScheduler`. The scheduler abstraction in `platforms/bukkit/core` is
+where that lives, and it is the reason one jar can serve all three server flavours.
+
+**A plugin that installs code is a supply chain.** Every download is verified against the
+checksum the central server declared before it is written anywhere the server will load
+from, and a file name carrying a path separator is refused outright.
 
 ## Current state
 
-The agent instruction system, the documentation trees, and the memory tree exist. The Gradle
-build and the source modules are being added task by task; until they land, the repository
-map at `.agents/wiki/context/repository-map.md` is the accurate statement of what is
-actually present.
+Pre-release at `0.0.0`. The instruction system, the Gradle build, the shared contract and
+both platform halves exist and are green. The manager logic — the client that reaches a
+central server, the version comparison, the download and apply steps — is being added task by
+task; until it lands, the repository map at `.agents/wiki/context/repository-map.md` is the
+accurate statement of what is actually present.
 
 ## Working with agents
 

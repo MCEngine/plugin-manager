@@ -25,7 +25,6 @@ protocol's approval gate. See `{shared}/rules/memory-policy.md`.
 | File | Purpose |
 |---|---|
 | [`tasks/mcpluginmanager-platform.md`](../memory/tasks/mcpluginmanager-platform.md) | Building the MCPluginManager platform across three repositories: the confirmed twenty-task plan and one entry per task. |
-| [`tasks/universal-plugin-template.md`](../memory/tasks/universal-plugin-template.md) | Scaffolding this repository into a universal plugin template: the confirmed task list and one entry per task. |
 
 ## Decisions
 
@@ -36,7 +35,5 @@ protocol's approval gate. See `{shared}/rules/memory-policy.md`.
 | [`decisions/minecraft-target-version.md`](../memory/decisions/minecraft-target-version.md) | Why the target is 1.21.11 and not a 26.x release, and what to check before retargeting. |
 | [`decisions/mods-build-parallelism.md`](../memory/decisions/mods-build-parallelism.md) | Why `-Pmods=true` deadlocks under Gradle's parallel execution, and how the build was changed so it stops. |
 | [`decisions/namespace-and-plugin-id.md`](../memory/decisions/namespace-and-plugin-id.md) | The namespace, plugin id, command and mod ids chosen for MCPluginManager, and the three literals a rename must reach. |
-| [`decisions/prompt-file-at-root.md`](../memory/decisions/prompt-file-at-root.md) | Why `PROMPT.md` sits at the repository root against the directory rule. |
 | [`decisions/session-trailer-stripped.md`](../memory/decisions/session-trailer-stripped.md) | Why the harness session trailer is stripped from commits and pull requests. |
-| [`decisions/template-identity-values.md`](../memory/decisions/template-identity-values.md) | The namespace, plugin id, version and Minecraft target chosen for the template, and why. |
 | [`decisions/versioned-logs-restored.md`](../memory/decisions/versioned-logs-restored.md) | Why `wiki/logs/` went back to version directories, and that creating one is gated again. |

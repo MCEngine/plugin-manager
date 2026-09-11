@@ -186,3 +186,48 @@ step on is not a tidier plan.
 
 Next task depends on: this rename. Every name task 5 writes into the documentation is one
 this task made true.
+
+### Task 5 — docs/project-identity
+
+The other half of the rename: every document, index and memory file that still described a
+template now describes MCPluginManager, and the file that made it a template is gone.
+
+**`PROMPT.md` deleted**, with its row in the `AGENTS.md` trigger table and the sentence in
+the opening paragraph that told a reader to start by running it. That is what the file was
+written to do once it had run. `AGENTS.md` now opens on what this repository is — a plugin
+that installs, updates and removes other plugins — and names the two repositories it works
+with.
+
+**The logs went back to version directories.** `wiki/logs/2026/09/04/` was deleted and
+`wiki/logs/0/0/0/CHANGELOG.md` written in its place, covering everything from the initial
+commit through the rename. `logs-index.md` was rewritten around the consequence rather than
+just the path: creating a log directory is a version claim again, so it is gated on user
+approval, which is the exact opposite of the rule this repository carried as a template.
+
+**Memory was pruned, not archived.** The template's own task record and the two decisions
+that only described being a template — `prompt-file-at-root.md` and
+`template-identity-values.md` — were deleted; `namespace-and-plugin-id.md` already carries
+the identity values that are actually true. `minecraft-target-version.md` and
+`session-trailer-stripped.md` were kept because both are still true, and the first was
+reworded off "the template" and repointed at the decision that replaced the one it linked to.
+
+**Three rules in `repository.md` are new, and none of them is a naming change.** A downloaded
+jar is verified against its declared checksum before it is written anywhere the server will
+load from; nothing blocks the server thread on the network or on disk; and Bukkit cannot
+unload a plugin, so an update is staged into `plugins/update/` and a removal happens at
+shutdown. They are here rather than in a later task because they constrain what may be
+written, and the tasks they constrain have not been written yet.
+
+**What was deliberately not done.** `AGENTS.md` still carries a *mirrored* trigger table,
+while `server-expressjs` and `client-reactjs` carry the newer **declaration** block with a
+stamped set version. Migrating it is a re-sync of the instruction set, which
+`{shared}/prompts/agents-update.md` is explicit runs on request only — so it is raised as a
+discovery finding instead of applied here.
+
+Verified: `./gradlew build` still green; no live reference to `PROMPT.md` or
+`universal-template` outside the changelog and the memory entries that describe deleting
+them; every relative link in every markdown file resolves; and the sweep for `Template`,
+`template` and the old namespace comes back empty across the whole repository.
+
+Next task depends on: nothing in this repository. The next work here — the manager client —
+waits on the central server's API contract, which task 6 documents.

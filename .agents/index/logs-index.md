@@ -1,6 +1,6 @@
 ---
 name: logs-index
-description: Index of wiki/logs/ — every day this repository changed, newest first.
+description: Index of wiki/logs/ — every version of this repository, newest first.
 ---
 
 # Logs Index
@@ -8,22 +8,24 @@ description: Index of wiki/logs/ — every day this repository changed, newest f
 **Scope:** `wiki/logs/`
 **Parent:** [root-index](root-index.md)
 
-Entries are dated, not versioned: `wiki/logs/{yyyy}/{mm}/{dd}/CHANGELOG.md`, with `mm` and
-`dd` zero-padded so the directories sort correctly. This repository's version is fixed at
-`0.0.0` — see [`../rules/repository.md`](../rules/repository.md) — so a version directory
-would encode a claim it can never make, while a date encodes the only ordering it has.
+Entries are versioned: `wiki/logs/{Major}/{Minor}/{Patch}/CHANGELOG.md`, matching
+`project-version` in `gradle.properties`.
 
-**A date directory is not a version claim, so creating one is not gated.** Record the day's
-work as you land it. That is the opposite of the rule for a version directory, which
-`{shared}/rules/versioning.md` gates on explicit user approval.
+**Creating a version directory is gated.** It is a version claim, so it needs explicit user
+approval before it exists — see `{shared}/rules/versioning.md`. Recording a change under a
+directory that already exists is not gated: append to the current version's `CHANGELOG.md`
+as you land the work.
 
-Two changes on the same day share one file: append to it rather than inventing a suffix.
+This repository used dated directories while it was a template, whose version was pinned at
+`0.0.0` permanently and could therefore never make a version claim at all. That reasoning
+stopped applying when it became a project — see
+[`../memory/decisions/versioned-logs-restored.md`](../memory/decisions/versioned-logs-restored.md).
 
 Listed **newest first**. Any file added to or removed from `wiki/logs/` is reflected here in
 the same commit.
 
 ## Entries
 
-| Date | Summary | Files |
+| Version | Summary | Files |
 |---|---|---|
-| [`2026/09/04`](../../wiki/logs/2026/09/04/CHANGELOG.md) | Built the repository into a working universal plugin template: instruction system, Gradle build, shared contract, Bukkit plugin, and the mod side. | `CHANGELOG.md` |
+| [`0/0/0`](../../wiki/logs/0/0/0/CHANGELOG.md) | Pre-release. The instruction system, the Gradle build, the shared contract, both platform halves, and the rename to MCPluginManager. | `CHANGELOG.md` |
