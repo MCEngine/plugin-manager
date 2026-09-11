@@ -83,6 +83,7 @@ processResources {
         version   : project.version,
         main      : "${namespace}.bukkit.engine.${pluginId}Engine",
         command   : commandName,
+        commandAlias: commandAlias,
         author    : author,
         apiVersion: providers.gradleProperty('plugin-api-version').get()
     ]

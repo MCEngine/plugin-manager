@@ -53,6 +53,7 @@ processResources {
         version       : project.version,
         main          : "${namespace}.bukkit.foliamc.${pluginId}FoliaMC",
         command       : commandName,
+        commandAlias: commandAlias,
         author    : author,
         apiVersion    : providers.gradleProperty('plugin-api-version').get(),
         foliaSupported: 'true'

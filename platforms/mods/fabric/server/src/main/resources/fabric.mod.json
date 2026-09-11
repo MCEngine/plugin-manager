@@ -3,7 +3,7 @@
   "id": "${modId}",
   "version": "${version}",
   "name": "${modName}",
-  "description": "Server half of the universal plugin template. Handles the actions the client sends over the plugin message channel.",
+  "description": "Server half of MCPluginManager. Handles the actions the client sends over the plugin message channel.",
   "authors": ["${author}"],
   "license": "MIT",
   "environment": "server",

@@ -34,6 +34,7 @@ protocol's approval gate. See `{shared}/rules/memory-policy.md`.
 | [`decisions/branch-convention-over-harness.md`](../memory/decisions/branch-convention-over-harness.md) | Why this work uses stacked `{type}/{primary-noun}` branches instead of the single branch the harness pinned. |
 | [`decisions/cross-repository-record.md`](../memory/decisions/cross-repository-record.md) | Why one task record in this repository covers work in three, and how the other two point at it. |
 | [`decisions/minecraft-target-version.md`](../memory/decisions/minecraft-target-version.md) | Why the target is 1.21.11 and not a 26.x release, and what to check before retargeting. |
+| [`decisions/mods-build-parallelism.md`](../memory/decisions/mods-build-parallelism.md) | Why `-Pmods=true` deadlocks under Gradle's parallel execution, and how the build was changed so it stops. |
 | [`decisions/namespace-and-plugin-id.md`](../memory/decisions/namespace-and-plugin-id.md) | The namespace, plugin id, command and mod ids chosen for MCPluginManager, and the three literals a rename must reach. |
 | [`decisions/prompt-file-at-root.md`](../memory/decisions/prompt-file-at-root.md) | Why `PROMPT.md` sits at the repository root against the directory rule. |
 | [`decisions/session-trailer-stripped.md`](../memory/decisions/session-trailer-stripped.md) | Why the harness session trailer is stripped from commits and pull requests. |

@@ -53,6 +53,7 @@ processResources {
         version       : project.version,
         main          : "${namespace}.bukkit.spigotmc.${pluginId}SpigotMC",
         command       : commandName,
+        commandAlias: commandAlias,
         author    : author,
         apiVersion    : providers.gradleProperty('plugin-api-version').get(),
         foliaSupported: 'false'
