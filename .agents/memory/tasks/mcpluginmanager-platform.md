@@ -54,6 +54,11 @@ Three repositories carry it:
 | Product identity | `products.id` opaque and global; `products.slug` globally unique |
 | One jar per product | Enforced structurally: `product_files.version_id` is the primary key |
 
+One of these was reversed during the work: **the server uses Kysely, not Prisma.** The
+approved data model needs partial unique indexes and CHECK constraints that Prisma's schema
+language cannot express. The reversal and its reasoning are in the task 20 entry below and in
+`MCEngine/server-expressjs` at `.agents/memory/decisions/query-builder-over-orm.md`.
+
 ## Rules deliberately set aside
 
 * **The harness pinned every repository to the branch `claude/epic-maxwell-juc8tk` and
@@ -71,28 +76,31 @@ Task 1 branches from `master`; task `k` branches from task `k-1` **within the sa
 repository**. Tasks in different repositories cannot stack, so they are ordered instead and
 each pull request names which pull request in which repository merges first.
 
+**PR numbers restart per repository**, so each cell names the repository as well as the
+number. Filled by task 20, which is last in every stack and therefore rebases nothing.
+
 | # | Title | Scope | Repository | Branch | Files / areas | PR |
 |---|---|---|---|---|---|---|
-| 1 | Task record | This file, its decisions, and the index rows they need | `plugin-manager` | `chore/mcpluginmanager-platform-plan` | `.agents/memory/`, `.agents/index/` | |
-| 2 | Agent instruction system | Mode B consumer setup for the central server | `server-expressjs` | `docs/agents-setup` | `AGENTS.md`, `.claude/`, `.agents/`, `wiki/`, `README.md` | |
-| 3 | Agent instruction system | Mode B consumer setup for the panel | `client-reactjs` | `docs/agents-setup` | `AGENTS.md`, `.claude/`, `.agents/`, `wiki/`, `README.md` | |
-| 4 | Build and Java identity | Rename the template identity to MCPluginManager | `plugin-manager` | `refactor/namespace` | `gradle.properties`, `build.gradle`, every package directory, every `Template*` type | |
-| 5 | Project identity docs | Documentation, memory and logs follow the rename | `plugin-manager` | `docs/project-identity` | `README.md`, `wiki/`, `.agents/`, `PROMPT.md` deleted | |
-| 6 | Data model and API contract | The schema and every endpoint, written before any code | `server-expressjs` | `docs/api-contract` | `wiki/information/` | |
-| 7 | Express skeleton | Runtime, config, error envelope, test harness | `server-expressjs` | `build/express-skeleton` | `package.json`, `tsconfig.json`, `src/`, `vitest` | |
-| 8 | Persistence layer | Repository interfaces, Prisma schema, migrations | `server-expressjs` | `feat/database` | `prisma/`, `src/db/` | |
-| 9 | Accounts, namespaces and orgs | Identity tables and their routes | `server-expressjs` | `feat/account` | `src/modules/account/`, `src/modules/org/` | |
-| 10 | Authentication and API tokens | Credentials, identities, sessions, scoped tokens | `server-expressjs` | `feat/authentication` | `src/modules/auth/`, `src/modules/token/` | |
-| 11 | Products, versions and uploads | Catalogue, jar validation, quota, CI/CD upload | `server-expressjs` | `feat/product` | `src/modules/product/`, `src/storage/` | |
-| 12 | Fleet control plane | Registered servers and their installed plugins | `server-expressjs` | `feat/fleet` | `src/modules/fleet/` | |
-| 13 | Audit and fleet logs | Both event tables, wired into tasks 9 to 12 | `server-expressjs` | `feat/audit-log` | `src/modules/audit/` | |
-| 14 | External source resolver | SpigotMC, Modrinth, Hangar, GitHub Releases, direct URL | `server-expressjs` | `feat/external-source` | `src/modules/source/` | |
-| 15 | React skeleton | Vite, router, API client, auth context | `client-reactjs` | `build/react-skeleton` | `package.json`, `vite.config.ts`, `src/` | |
-| 16 | Auth and account pages | Login, devices, namespace settings, org members, tokens | `client-reactjs` | `feat/account` | `src/routes/account/`, `src/routes/org/` | |
-| 17 | Product pages | The four `/product/*` routes | `client-reactjs` | `feat/product` | `src/routes/product/` | |
-| 18 | Plugin transport and versions | Multi-server client, token auth, version comparison | `plugin-manager` | `feat/manager-client` | `api/`, `common/`, `platforms/bukkit/core/` | |
-| 19 | Plugin commands and apply | Install, update and delete through the update folder | `plugin-manager` | `feat/manager-commands` | `platforms/bukkit/core/` | |
-| 20 | Release | Logs, index rows, this table, the record closed | all three | `chore/release` | `wiki/logs/0/0/0/`, `.agents/` | |
+| 1 | Task record | This file, its decisions, and the index rows they need | `plugin-manager` | `chore/mcpluginmanager-platform-plan` | `.agents/memory/`, `.agents/index/` | MCEngine/plugin-manager#1 |
+| 2 | Agent instruction system | Mode B consumer setup for the central server | `server-expressjs` | `docs/agents-setup` | `AGENTS.md`, `.claude/`, `.agents/`, `wiki/`, `README.md` | MCEngine/server-expressjs#1 |
+| 3 | Agent instruction system | Mode B consumer setup for the panel | `client-reactjs` | `docs/agents-setup` | `AGENTS.md`, `.claude/`, `.agents/`, `wiki/`, `README.md` | MCEngine/client-reactjs#1 |
+| 4 | Build and Java identity | Rename the template identity to MCPluginManager | `plugin-manager` | `refactor/namespace` | `gradle.properties`, `build.gradle`, every package directory, every `Template*` type | MCEngine/plugin-manager#2 |
+| 5 | Project identity docs | Documentation, memory and logs follow the rename | `plugin-manager` | `docs/project-identity` | `README.md`, `wiki/`, `.agents/`, `PROMPT.md` deleted | MCEngine/plugin-manager#3 |
+| 6 | Data model and API contract | The schema and every endpoint, written before any code | `server-expressjs` | `docs/api-contract` | `wiki/information/` | MCEngine/server-expressjs#2 |
+| 7 | Express skeleton | Runtime, config, error envelope, test harness | `server-expressjs` | `build/express-skeleton` | `package.json`, `tsconfig.json`, `src/`, `vitest` | MCEngine/server-expressjs#3 |
+| 8 | Persistence layer | Repository interfaces, Prisma schema, migrations | `server-expressjs` | `feat/database` | `prisma/`, `src/db/` | MCEngine/server-expressjs#4 |
+| 9 | Accounts, namespaces and orgs | Identity tables and their routes | `server-expressjs` | `feat/account` | `src/modules/account/`, `src/modules/org/` | MCEngine/server-expressjs#5 |
+| 10 | Authentication and API tokens | Credentials, identities, sessions, scoped tokens | `server-expressjs` | `feat/authentication` | `src/modules/auth/`, `src/modules/token/` | MCEngine/server-expressjs#6 |
+| 11 | Products, versions and uploads | Catalogue, jar validation, quota, CI/CD upload | `server-expressjs` | `feat/product` | `src/modules/product/`, `src/storage/` | MCEngine/server-expressjs#7 |
+| 12 | Fleet control plane | Registered servers and their installed plugins | `server-expressjs` | `feat/fleet` | `src/modules/fleet/` | MCEngine/server-expressjs#8 |
+| 13 | Audit and fleet logs | Both event tables, wired into tasks 9 to 12 | `server-expressjs` | `feat/audit-log` | `src/modules/audit/` | MCEngine/server-expressjs#9 |
+| 14 | External source resolver | SpigotMC, Modrinth, Hangar, GitHub Releases, direct URL | `server-expressjs` | `feat/external-source` | `src/modules/source/` | MCEngine/server-expressjs#10 |
+| 15 | React skeleton | Vite, router, API client, auth context | `client-reactjs` | `build/react-skeleton` | `package.json`, `vite.config.ts`, `src/` | MCEngine/client-reactjs#2 |
+| 16 | Auth and account pages | Login, devices, namespace settings, org members, tokens | `client-reactjs` | `feat/account` | `src/routes/account/`, `src/routes/org/` | MCEngine/client-reactjs#3 |
+| 17 | Product pages | The four `/product/*` routes | `client-reactjs` | `feat/product` | `src/routes/product/` | MCEngine/client-reactjs#4 |
+| 18 | Plugin transport and versions | Multi-server client, token auth, version comparison | `plugin-manager` | `feat/manager-client` | `api/`, `common/`, `platforms/bukkit/core/` | MCEngine/plugin-manager#4 |
+| 19 | Plugin commands and apply | Install, update and delete through the update folder | `plugin-manager` | `feat/manager-commands` | `platforms/bukkit/core/` | MCEngine/plugin-manager#5 |
+| 20 | Release | Logs, index rows, this table, the record closed | all three | `chore/release` | `wiki/logs/0/0/0/`, `.agents/` | MCEngine/plugin-manager#6, MCEngine/server-expressjs#11, MCEngine/client-reactjs#5 |
 
 ## Entries
 
@@ -342,3 +350,49 @@ a real directory: stage an update under the installed jar's name, refuse a tampe
 continue past a failure, and delete at shutdown.
 
 Next task depends on: nothing. The release is the last task.
+
+### Task 20 — chore/release
+
+The last task in all three stacks, and the only one that runs in three repositories at once.
+It rebases nothing, which is why it is the task that fills the `PR` column above: every
+number is known by the time it runs and none of them will move.
+
+**What it wrote, per repository.** The `PR` column and this entry here; the release section
+of `wiki/logs/0/0/0/CHANGELOG.md`; and `repository-state.md` brought current so the next
+session starts from what exists rather than from this plan. `server-expressjs` and
+`client-reactjs` each got the same three, against their own memory trees and their own
+changelogs.
+
+**The version did not move.** `0.0.0` in all three repositories, and `wiki/logs/0/0/0/` is
+the directory that already existed — appending to it is not a version claim and needs no
+approval. Nothing has shipped; the first release that ships is the one that asks.
+
+**A decision approved before the work started was reversed during it, and the reversal is
+reported rather than buried.** The plan above says Prisma. Task 8 used Kysely instead,
+because the approved data model relies on partial unique indexes (one active credential per
+namespace) and on CHECK constraints that Prisma's schema language cannot express across
+SQLite, PostgreSQL and MySQL — enforcing them would have meant raw SQL beside the ORM, which
+is the cost of the ORM without its benefit. Recorded in
+`MCEngine/server-expressjs` at `.agents/memory/decisions/query-builder-over-orm.md`. The
+objective the decision served — one schema over SQLite in test and PostgreSQL, MySQL and
+MariaDB in production, behind repository interfaces — is met.
+
+**What the twenty tasks add up to.** A Bukkit plugin that polls one or more central servers,
+compares versions, verifies checksums and stages installs, updates and deletions through
+`plugins/update/`; a central server with accounts, namespaces, orgs, scoped tokens, a product
+catalogue with jar validation and per-org quota, a fleet control plane, two audit trails and
+an external source resolver; and a panel that drives all of it. 331 tests across the two
+Node repositories and 82 in the plugin, all green.
+
+**Open, and named so it is not mistaken for done.** There is no artifact signature — a
+download is verified against the checksum the central server declared, which proves it
+survived the wire, not who published it. Closing it needs both repositories and a key
+distribution story. `platforms/mods/` still carries only the template's channel and codec;
+the manager contract is Bukkit-side. MongoDB has no adapter.
+
+Next task depends on: nothing. This closes the record.
+
+## Status
+
+**Done.** All twenty tasks landed; the table above carries the pull request each one merged
+through. Follow-up work starts a new record rather than appending here.

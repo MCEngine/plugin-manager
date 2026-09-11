@@ -7,7 +7,7 @@ description: What this repository contains right now, what it does not yet, and 
 
 Overwritten in place, always current.
 
-## As of the rename to MCPluginManager
+## As of the 0.0.0 pre-release
 
 `MCEngine/plugin-manager` is a **Mode B consumer** of the shared instruction set served by
 the `lxagents-agents-base` connector. It declares no overrides.
@@ -19,6 +19,15 @@ the `lxagents-agents-base` connector. It declares no overrides.
 Gradle build — `settings.gradle`, `build.gradle`, `gradle.properties`, `.gitattributes`,
 `.gitignore`, and the committed wrapper pinning Gradle 9.5.0 — the `api/` and `common/`
 modules, the five `platforms/bukkit/` modules, and `platforms/mods/`.
+
+**The manager:** `api/.../manager/` carries the contract a third party could implement —
+`CentralServer`, `ManagerClient`, `DesiredState`, `DesiredChange`, `InstalledPlugin`.
+`common/.../manager/` carries the implementation: an `HttpClient` transport that refuses
+redirects and verifies a checksum before the jar moves into place, `Versions` comparing
+numerically, a hand-written read-only JSON reader, a `plugin.yml` inventory, and
+`UpdateStaging`, which writes to `plugins/update/` under the **installed jar's** file name
+and records deletions for shutdown. `platforms/bukkit/core/.../manager/` wires the poll loop
+and reads `config.yml`; `/mcpluginmanager` (alias `/mcpm`) drives it by hand.
 
 **Gone:** `PROMPT.md`. It was the one-time fork setup procedure; it has run and deleted
 itself, along with its row in the `AGENTS.md` trigger table, the template's own task record,
@@ -71,5 +80,12 @@ would drop every comment in the file.
 
 ## Next step
 
-Nothing but the release task, which fills the plan's `PR` column and closes the record. The
-full ordered plan is in [`../tasks/mcpluginmanager-platform.md`](../tasks/mcpluginmanager-platform.md).
+**The twenty-task plan is finished and its record is closed.** Follow-up work opens a new
+record rather than appending to
+[`../tasks/mcpluginmanager-platform.md`](../tasks/mcpluginmanager-platform.md), which stays
+as the account of how this repository got here.
+
+The obvious candidates, in the order they matter: artifact signatures, which need
+`MCEngine/server-expressjs` to sign and this repository to carry the public key; the mod half,
+which still does nothing with the manager; and a first shipping version, which is a version
+claim and therefore asks first.
