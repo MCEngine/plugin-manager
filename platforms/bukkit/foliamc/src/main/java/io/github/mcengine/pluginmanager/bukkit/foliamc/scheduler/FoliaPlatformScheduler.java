@@ -47,6 +47,21 @@ public final class FoliaPlatformScheduler implements PlatformScheduler {
     }
 
     /**
+     * Runs the task on Folia's global region scheduler.
+     *
+     * <p>Folia has no main thread, so {@code Bukkit.getScheduler()} throws here.
+     * The global region scheduler is what owns state that belongs to no
+     * particular region — which is what the command map and the event registry
+     * are.</p>
+     *
+     * @param task The work to run.
+     */
+    @Override
+    public void runGlobal(Runnable task) {
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, scheduledTask -> task.run());
+    }
+
+    /**
      * Runs the task on Folia's async scheduler.
      *
      * @param task The work to run.

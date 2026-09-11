@@ -3,9 +3,13 @@ enable: true
 
 # --- [ This server's identity ] ---
 #
-# Registered once, with `/mcpm register <name>`, which fills in both values
-# below. The key is a credential: anyone holding it can report an inventory for
-# this server and read what it should be running.
+# `/mcpm register <name>` registers this server and prints the key for you to
+# paste below; the panel shows the matching id. It prints rather than writes,
+# because saving would rewrite this file through Bukkit's saveConfig() and that
+# drops every comment in it -- which here is most of what the file is for.
+#
+# The key is a credential: anyone holding it can report an inventory for this
+# server and read what it should be running.
 server:
   id: ''
   key: ''

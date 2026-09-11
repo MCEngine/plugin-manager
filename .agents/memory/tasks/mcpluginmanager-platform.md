@@ -288,3 +288,57 @@ wire behaviour and a mock would only assert that the code calls the methods it c
 
 Next task depends on: `ManagerClient`, `ManagerConfig` and `Versions`, which the commands and
 the apply flow are written against.
+
+### Task 19 — feat/manager-commands
+
+The other half of the plugin: reading what is installed, applying what the server asks for,
+the command surface, and the poll loop.
+
+**A Folia defect was found and fixed, and it was not this task's to create.**
+`AbstractMCPluginManagerPlugin` called `getServer().getScheduler().runTask(...)` to register
+its command, and `Bukkit.getScheduler()` throws `UnsupportedOperationException` on Folia —
+so the plugin would have failed to register its command on the one platform the whole
+scheduler abstraction exists for. `PlatformScheduler` gained `runGlobal`, implemented with
+Bukkit's scheduler on Spigot and Paper and with `getGlobalRegionScheduler()` on Folia, and
+the bootstrap goes through it. Fixed here because this is the task that put real work on
+those threads and therefore the task that found it.
+
+**Nothing loads or unloads a plugin, and the code says why in the place a reader will look.**
+Bukkit has no supported `unload`; an install or an update is downloaded into
+`plugins/update/`, which the server itself applies on its next start, and a delete is
+recorded and performed at shutdown because a loaded jar cannot be deleted on Windows while
+the server runs. Every message a person sees says "when the server restarts", because that is
+what actually happens.
+
+**A staged jar takes the installed jar's file name, not the plugin's.** `EssentialsX-2.20.1.jar`
+declares `name: Essentials`; staging it as `Essentials.jar` would make the server load a
+second copy alongside the first rather than replace it. `findInstalledJar` therefore reads
+each descriptor rather than guessing from file names, and a test holds that.
+
+**One failure does not stop the rest.** A jar that fails its checksum is reported and skipped,
+and the other four plugins on the server still get their updates. Reporting the outcome is
+itself best-effort: the work already happened, and failing the apply because the report of it
+did not go through would leave the operator without their update *and* the panel disagreeing
+with the server.
+
+**`register` prints rather than writes.** Saving means `saveConfig()`, which drops every
+comment in `config.yml` — and in this plugin's config the comments are most of what the file
+is for. Two values pasted by hand is the smaller cost, and the command says so.
+
+**A correction the tests forced, kept in the code rather than the test.**
+`jarNameFor("../../etc/passwd")` produced `.._.._etc_passwd.jar` — safe, since every separator
+was already substituted, but a name that reads as a traversal and is hidden on Unix. Leading
+dots are now stripped. The assertion that caught it was mine and it was right.
+
+**The command needs `mcpluginmanager.admin`, defaulting to op**, and runs from the console —
+an unattended server has no player to run it. Every subcommand that touches the network or
+the disk goes through `Schedulers.runAsync`, because the thread a command arrives on is a
+region thread on Folia and stalling one stalls a slice of the world.
+
+Verified: `./gradlew build` green, 82 tests, and `-Pmods=true` still green. The engine jar's
+descriptor carries the new usage line, the alias and the permission; the produced jars are
+all five at `0.0.0`. The end-to-end test drives the whole flow against a real HTTP server and
+a real directory: stage an update under the installed jar's name, refuse a tampered one,
+continue past a failure, and delete at shutdown.
+
+Next task depends on: nothing. The release is the last task.

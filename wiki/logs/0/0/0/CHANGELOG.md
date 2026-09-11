@@ -25,6 +25,13 @@ release, and is appended to as each task lands.
   client and server modules for Fabric, NeoForge and Forge.
 - `wiki/` — project overview, architecture, and local setup.
 
+- The manager itself: a client for the central server, version comparison that orders
+  `1.10.0` above `1.9.0`, checksum verification, a read-only JSON parser and a plugin
+  inventory reader — none of which adds a dependency a Bukkit server could conflict with.
+- `/mcpluginmanager` (alias `/mcpm`) with `status`, `servers`, `check`, `apply`, `report`,
+  `register` and `pending`, behind `mcpluginmanager.admin` and usable from the console.
+- A poll loop that reports what is installed, asks what should change, and stages it.
+
 ## Changed
 
 - **Renamed from the `universal-template` identity to MCPluginManager.** The namespace moved
@@ -38,6 +45,13 @@ release, and is appended to as each task lands.
 - Turned parallel project execution off inside the `-Pmods=true` branch of
   `settings.gradle`. NeoFormRuntime guards its shared Minecraft decompile with a lock that
   two concurrently configuring NeoForge modules deadlock on.
+
+## Fixed
+
+- **The plugin could not register its command on Folia.** The bootstrap called
+  `Bukkit.getScheduler()`, which throws `UnsupportedOperationException` there.
+  `PlatformScheduler` gained `runGlobal`, backed by the global region scheduler on Folia and
+  by Bukkit's scheduler elsewhere, and nothing shared reaches for Bukkit's directly any more.
 
 ## Removed
 
